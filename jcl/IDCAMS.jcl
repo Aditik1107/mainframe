@@ -1,0 +1,65 @@
+//IDCAMDEF JOB (MAINFRAME,PROD),'DEFINE VSAM KSDS',
+//             CLASS=A,
+//             MSGCLASS=X,
+//             NOTIFY=&SYSUID
+//*===================================================================*
+//* JOB NAME:  IDCAMS                                                 *
+//* PURPOSE:   DEFINES VSAM KSDS CLUSTERS FOR SUBSCRIPTION SYSTEM:    *
+//*            1. CUSTMAST.KSDS (KEY: OFFSET 0, LENGTH 10)            *
+//*            2. SUBMAST.KSDS  (KEY: OFFSET 0, LENGTH 10)            *
+//*            3. PLANMAST.KSDS (KEY: OFFSET 0, LENGTH 8)             *
+//*===================================================================*
+//STEP01   EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD  *
+  /* ---------------- CUSTOMER MASTER CLUSTER ---------------- */
+  DELETE PROD.SUBSYS.CUSTMAST.KSDS CLUSTER PURGE
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(PROD.SUBSYS.CUSTMAST.KSDS) -
+     INDEXED -
+     KEYS(10 0) -
+     RECORDSIZE(100 100) -
+     CYLINDERS(5 2) -
+     SHAREOPTIONS(2 3) -
+     VOLUMES(VOL001)) -
+    DATA(NAME(PROD.SUBSYS.CUSTMAST.DATA)) -
+    INDEX(NAME(PROD.SUBSYS.CUSTMAST.INDEX))
+
+  /* ---------------- SUBSCRIPTION MASTER CLUSTER ------------ */
+  DELETE PROD.SUBSYS.SUBMAST.KSDS CLUSTER PURGE
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(PROD.SUBSYS.SUBMAST.KSDS) -
+     INDEXED -
+     KEYS(10 0) -
+     RECORDSIZE(80 80) -
+     CYLINDERS(10 5) -
+     SHAREOPTIONS(2 3) -
+     VOLUMES(VOL001)) -
+    DATA(NAME(PROD.SUBSYS.SUBMAST.DATA)) -
+    INDEX(NAME(PROD.SUBSYS.SUBMAST.INDEX))
+
+  /* ---------------- PLAN MASTER CLUSTER -------------------- */
+  DELETE PROD.SUBSYS.PLANMAST.KSDS CLUSTER PURGE
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(PROD.SUBSYS.PLANMAST.KSDS) -
+     INDEXED -
+     KEYS(8 0) -
+     RECORDSIZE(60 60) -
+     CYLINDERS(2 1) -
+     SHAREOPTIONS(2 3) -
+     VOLUMES(VOL001)) -
+    DATA(NAME(PROD.SUBSYS.PLANMAST.DATA)) -
+    INDEX(NAME(PROD.SUBSYS.PLANMAST.INDEX))
+
+  /* VERIFY CATALOG ALLOCATION */
+  LISTCAT ENTRIES(PROD.SUBSYS.CUSTMAST.KSDS -
+                  PROD.SUBSYS.SUBMAST.KSDS -
+                  PROD.SUBSYS.PLANMAST.KSDS) ALL
+/*
+//

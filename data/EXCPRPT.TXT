@@ -1,0 +1,16 @@
+========================================================================================================================
+MAINFRAME EXCEPTION AUDIT SYSTEM (JOB SUBBILL01)                    REPORT: EXCPRPT - BATCH EXCEPTION & REJECTION LOG
+RUN DATE: 2026-10-21                                                       PAGE: 0001 BATCH EXCEPTION & REJECTION LOG
+========================================================================================================================
+STEP      RECORD KEY    CODE    FAILURE REASON / EXCEPTION DESCRIPTION       TIMESTAMP
+--------  ------------  ------  -------------------------------------------  -------------------
+SUBVAL    SUB1000007    ERR001  CUSTOMER IS INACTIVE OR SUSPENDED              2026-10-21 15:31:08
+SUBVAL    SUB1000008    ERR003  SUBSCRIPTION STATUS IS NOT ACTIVE              2026-10-21 15:31:08
+SUBVAL    SUB1000009    ERR004  PLAN IS RETIRED OR INACTIVE                    2026-10-21 15:31:08
+SUBVAL    SUB1000010    ERR001  CUSTOMER IS INACTIVE OR SUSPENDED              2026-10-21 15:31:08
+PAYPROC   TXN202610015  ERR013  AMOUNT MISMATCH: PAID LESS THAN BILLED AMT     2026-10-21 15:31:08
+PAYPROC   TXN202610016  ERR011  PAYMENT GATEWAY REPORTED TRANSACTION FAILED    2026-10-21 15:31:08
+PAYPROC   TXN202610011  ERR010  DUPLICATE TRANSACTION ID DETECTED              2026-10-21 15:31:08
+------------------------------------------------------------------------------------------------------------------------
+TOTAL EXCEPTION RECORDS DIVERTED: 00007 (BATCH PROCEEDED WITHOUT INTERRUPTION)
+========================================================================================================================

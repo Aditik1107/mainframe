@@ -1,0 +1,13 @@
+========================================================================================================================
+MAINFRAME REVENUE MANAGEMENT SYSTEM (JOB SUBBILL01)                 REPORT: REVRPT - EXECUTIVE REVENUE SUMMARY
+RUN DATE: 2026-10-21                                                       PAGE: 0001EXECUTIVE REVENUE SUMMARY
+========================================================================================================================
+PLAN ID   PLAN NAME                  SUBS      BILLED REVENUE        RECEIVED PAYMENTS     OUTSTANDING AMOUNT
+--------  -------------------------  -----  --------------------  --------------------  --------------------
+PLAN-001  Cloud Standard Tier            2         2,180.82         7,783.64         5,602.82
+PLAN-002  Enterprise Dedicated           2        10,322.94             0.00        10,322.94
+PLAN-003  Student Data Lab               1           588.82             0.00           588.82
+PLAN-004  Mainframe Batch Platinum       1        10,618.94             0.00        10,618.94
+PLAN-099  Legacy Retired Plan            0             0.00             0.00             0.00
+TOTAL     ALL PLANS COMBINED             6        23,711.52         7,783.64        15,927.88
+========================================================================================================================

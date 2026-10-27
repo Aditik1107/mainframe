@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartBill — Mainframe Automated Billing &amp; Revenue Intelligence</title>
+  
+  <!-- Modern Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ivory: {
+              50: '#FDFCF9',
+              100: '#FAF7F2', // Warm Ivory Base
+              200: '#F4EFE6',
+              300: '#EAE1D2',
+              border: '#E8E0D2',
+              dark: '#1B241E', // High-contrast Deep Forest Charcoal
+              muted: '#626E65',
+            },
+            emerald: {
+              DEFAULT: '#059669', // Emerald Green Accent
+              dark: '#047857',
+              light: '#E6F4EA',
+              border: '#A7F3D0',
+            },
+            vermilion: {
+              DEFAULT: '#E34234', // Vermilion Accent
+              dark: '#C72F22',
+              light: '#FDECEB',
+              border: '#FCA5A5',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons & Three.js & Confetti -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      background-color: #FAF7F2;
+      color: #1B241E;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #DDD1BD;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #059669;
+    }
+
+    /* Range slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #059669;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.4);
+      border: 2px solid #FAF7F2;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #E8E0D2;
+      border-radius: 3px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: flex;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-anim {
+      animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Soundwave animation when assistant is speaking */
+    @keyframes soundwave {
+      0%, 100% { height: 4px; }
+      50% { height: 16px; }
+    }
+    .wave-bar-1 { animation: soundwave 0.5s ease-in-out infinite; }
+    .wave-bar-2 { animation: soundwave 0.7s ease-in-out infinite 0.15s; }
+    .wave-bar-3 { animation: soundwave 0.6s ease-in-out infinite 0.3s; }
+    .wave-bar-4 { animation: soundwave 0.8s ease-in-out infinite 0.1s; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-[#FAF7F2] text-[#1B241E]">
+
+  <!-- TOAST ALERTS CONTAINER -->
+  <div id="toast-container" class="fixed top-16 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- INTERACTIVE AI VOICE ASSISTANT (FLOATING WIDGET)                          -->
+  <!-- ========================================================================= -->
+  <div id="assistant-container" class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2.5 max-w-sm pointer-events-auto">
+    
+    <!-- Assistant Speech Bubble -->
+    <div id="assistant-bubble" class="bg-[#FAF7F2] border-2 border-[#A7F3D0] rounded-2xl p-4 shadow-xl flex flex-col gap-2 transition-all duration-300 w-80">
+      <div class="flex items-center justify-between border-b border-[#E8E0D2] pb-2">
+        <div class="flex items-center gap-2">
+          <!-- Animated soundwave / speaking indicator -->
+          <div id="soundwave-container" class="hidden flex items-center gap-0.5 h-4">
+            <span class="w-1 bg-[#059669] rounded-full wave-bar-1"></span>
+            <span class="w-1 bg-[#059669] rounded-full wave-bar-2"></span>
+            <span class="w-1 bg-[#059669] rounded-full wave-bar-3"></span>
+            <span class="w-1 bg-[#059669] rounded-full wave-bar-4"></span>
+          </div>
+          <span class="text-xs font-bold text-[#059669] font-mono uppercase" id="assistant-title">SmartBill Assistant</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <!-- Voice Mute Toggle -->
+          <button onclick="toggleVoiceMute()" id="btn-voice-toggle" class="p-1 rounded-md text-[#626E65] hover:text-[#059669] hover:bg-[#F4EFE6]" title="Toggle Voice-Over">
+            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+          </button>
+          <!-- Replay Button -->
+          <button onclick="replayCurrentSpeech()" class="p-1 rounded-md text-[#626E65] hover:text-[#059669] hover:bg-[#F4EFE6]" title="Replay Speech">
+            <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          </button>
+          <!-- Minimize Button -->
+          <button onclick="toggleAssistantBubble()" class="p-1 rounded-md text-[#626E65] hover:text-[#1B241E] hover:bg-[#F4EFE6]" title="Minimize">
+            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dialogue text in simple English -->
+      <p id="assistant-text" class="text-xs text-[#1B241E] leading-relaxed">
+        Hello! I am your SmartBill Assistant. Click below to hear a quick guided tour, or click "Run Billing Cycle" to watch the mainframe process invoices in real time!
+      </p>
+
+      <!-- Quick interactive prompt buttons -->
+      <div class="flex flex-wrap gap-1.5 pt-1 border-t border-[#E8E0D2]/60">
+        <button onclick="startGuidedTour()" class="px-2 py-1 bg-[#E6F4EA] hover:bg-[#D1EBD8] text-[#059669] font-bold text-[10px] rounded-md transition-colors">
+          &bull; Guided Tour
+        </button>
+        <button onclick="explainBillingLogic()" class="px-2 py-1 bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] text-[#1B241E] text-[10px] rounded-md transition-colors">
+          &bull; How Billing Works
+        </button>
+        <button onclick="explainExceptionsLogic()" class="px-2 py-1 bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] text-[#1B241E] text-[10px] rounded-md transition-colors">
+          &bull; Why Records Divert
+        </button>
+      </div>
+    </div>
+
+    <!-- Assistant Avatar Pill Button -->
+    <button onclick="toggleAssistantBubble()" class="bg-[#059669] hover:bg-[#047857] text-white p-3 rounded-full shadow-lg flex items-center gap-2 transition-transform hover:scale-105 border-2 border-white">
+      <i data-lucide="bot" class="w-5 h-5"></i>
+      <span class="text-xs font-bold pr-1 font-mono">Assistant Voice</span>
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TOP CLEAN HEADER (MINIMAL, CLEAR, ELEGANT)                                -->
+  <!-- ========================================================================= -->
+  <header class="h-16 border-b border-[#E8E0D2] bg-[#FAF7F2] px-6 flex items-center justify-between z-30 shrink-0">
+    <!-- Brand / System Title -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-[#059669] flex items-center justify-center text-white font-mono font-bold text-sm shadow-xs">
+        SB
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm font-bold tracking-tight text-[#1B241E]">SmartBill</h1>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0]">Batch Active</span>
+        </div>
+        <p class="text-[11px] font-mono text-[#626E65]">Mainframe Automated Billing Engine &bull; JOB SUBBILL01</p>
+      </div>
+    </div>
+
+    <!-- 5 Clean Navigation Tabs -->
+    <nav class="flex items-center gap-1 bg-[#F4EFE6] p-1 rounded-xl border border-[#E8E0D2]">
+      <button onclick="switchTab('cycle')" id="tab-btn-cycle" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5">
+        <i data-lucide="play-circle" class="w-4 h-4"></i>
+        <span>Billing Cycle</span>
+      </button>
+      <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+        <i data-lucide="calculator" class="w-4 h-4"></i>
+        <span>Calculator &amp; Lab</span>
+      </button>
+      <button onclick="switchTab('records')" id="tab-btn-records" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+        <i data-lucide="database" class="w-4 h-4"></i>
+        <span>Records</span>
+      </button>
+      <button onclick="switchTab('reports')" id="tab-btn-reports" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        <span>Reports</span>
+      </button>
+      <button onclick="switchTab('3d')" id="tab-btn-3d" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+        <i data-lucide="box" class="w-4 h-4"></i>
+        <span>3D Model</span>
+      </button>
+    </nav>
+
+    <!-- Header Quick Actions -->
+    <div class="flex items-center gap-2">
+      <button onclick="resetToFactoryState()" title="Reset data to factory state" class="px-3 py-1.5 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] text-[#1B241E] border border-[#E8E0D2] rounded-lg transition-colors flex items-center gap-1.5">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-[#626E65]"></i>
+        <span>Reset Data</span>
+      </button>
+      <button onclick="runBillingCycle()" id="btn-header-run" class="px-4 py-1.5 text-xs font-mono bg-[#059669] hover:bg-[#047857] text-white rounded-lg transition-colors flex items-center gap-1.5 font-bold shadow-xs">
+        <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
+        <span>Run Billing Cycle</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER                                                    -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 flex flex-col overflow-hidden relative">
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 1: BILLING CYCLE (INTUITIVE, HIGH IMPACT, ZERO CONFUSION)         -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-cycle" class="tab-pane active flex-1 p-6 overflow-y-auto flex-col gap-6">
+      
+      <!-- Big Action Bar & Visual 5-Stage Stepper -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-6 shadow-xs flex flex-col gap-5">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-[#1B241E]">Automated Batch Billing Cycle</h2>
+            <p class="text-xs text-[#626E65] mt-0.5">Click below to execute validation, bill calculation, payment matching, and reporting.</p>
+          </div>
+          <button onclick="runBillingCycle()" id="btn-main-run" class="px-6 py-2.5 text-sm font-bold bg-[#059669] hover:bg-[#047857] text-white rounded-xl shadow-sm transition-all flex items-center gap-2">
+            <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+            <span>Run Billing Cycle Now</span>
+          </button>
+        </div>
+
+        <!-- 5-Stage Pipeline Progress Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 pt-2 border-t border-[#E8E0D2]">
+          <div id="stage-card-1" class="p-3 bg-[#E6F4EA] border border-[#A7F3D0] rounded-xl flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">1</span>
+            <div class="text-xs">
+              <span class="font-bold text-[#059669] block">Validation</span>
+              <span class="text-[10px] text-[#626E65]">SUBVAL &bull; RC=0004</span>
+            </div>
+          </div>
+          <div id="stage-card-2" class="p-3 bg-[#E6F4EA] border border-[#A7F3D0] rounded-xl flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">2</span>
+            <div class="text-xs">
+              <span class="font-bold text-[#059669] block">Calculation</span>
+              <span class="text-[10px] text-[#626E65]">BILLPROC &bull; RC=0000</span>
+            </div>
+          </div>
+          <div id="stage-card-3" class="p-3 bg-[#E6F4EA] border border-[#A7F3D0] rounded-xl flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">3</span>
+            <div class="text-xs">
+              <span class="font-bold text-[#059669] block">Payment Match</span>
+              <span class="text-[10px] text-[#626E65]">PAYPROC &bull; RC=0004</span>
+            </div>
+          </div>
+          <div id="stage-card-4" class="p-3 bg-[#E6F4EA] border border-[#A7F3D0] rounded-xl flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">4</span>
+            <div class="text-xs">
+              <span class="font-bold text-[#059669] block">Revenue Ledger</span>
+              <span class="text-[10px] text-[#626E65]">REVPROC &bull; RC=0000</span>
+            </div>
+          </div>
+          <div id="stage-card-5" class="p-3 bg-[#E6F4EA] border border-[#A7F3D0] rounded-xl flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs">5</span>
+            <div class="text-xs">
+              <span class="font-bold text-[#059669] block">Reports</span>
+              <span class="text-[10px] text-[#626E65]">REPORT &bull; RC=0000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Clear Metric Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] p-5 rounded-2xl shadow-xs">
+          <span class="text-xs font-mono text-[#626E65] uppercase font-bold">Total Billed</span>
+          <div class="text-2xl font-bold text-[#059669] mt-1" id="dash-billed">₹23,711.52</div>
+          <span class="text-[11px] text-[#626E65] mt-1 block">6 Valid Invoices Generated</span>
+        </div>
+
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] p-5 rounded-2xl shadow-xs">
+          <span class="text-xs font-mono text-[#626E65] uppercase font-bold">Cash Received</span>
+          <div class="text-2xl font-bold text-[#059669] mt-1" id="dash-received">₹7,783.64</div>
+          <span class="text-[11px] text-[#626E65] mt-1 block">4 Verified Payments Matched</span>
+        </div>
+
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] p-5 rounded-2xl shadow-xs">
+          <span class="text-xs font-mono text-[#626E65] uppercase font-bold">Outstanding Due</span>
+          <div class="text-2xl font-bold text-[#E34234] mt-1" id="dash-outstanding">₹15,927.88</div>
+          <span class="text-[11px] text-[#626E65] mt-1 block">Pending Customer Remittance</span>
+        </div>
+
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] p-5 rounded-2xl shadow-xs">
+          <span class="text-xs font-mono text-[#626E65] uppercase font-bold">Exceptions Diverted</span>
+          <div class="text-2xl font-bold text-[#E34234] mt-1" id="dash-exceptions">4</div>
+          <span class="text-[11px] text-[#E34234] mt-1 block">Isolated in EXCEPTION.DAT</span>
+        </div>
+      </div>
+
+      <!-- Split Results: Valid Invoices (Left) vs Diverted Exceptions (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Left: Valid Invoices -->
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-[#E8E0D2]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+              <h3 class="text-xs font-bold font-mono text-[#1B241E] uppercase">Approved Invoices (BILLS.DAT)</h3>
+            </div>
+            <button onclick="exportCSV('bills')" class="text-xs font-mono text-[#059669] hover:underline font-bold">Download CSV</button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="text-[#626E65] border-b border-[#E8E0D2] text-[10px] uppercase">
+                <tr>
+                  <th class="py-2">Bill ID</th>
+                  <th class="py-2">Subscription</th>
+                  <th class="py-2">Discount</th>
+                  <th class="py-2">Tax (18%)</th>
+                  <th class="py-2 text-right">Final Bill</th>
+                </tr>
+              </thead>
+              <tbody id="dash-invoices-body" class="divide-y divide-[#E8E0D2]"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Diverted Exceptions -->
+        <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-[#E8E0D2]">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#E34234]"></span>
+              <h3 class="text-xs font-bold font-mono text-[#1B241E] uppercase">Diverted Exceptions (EXCEPTION.DAT)</h3>
+            </div>
+            <button onclick="exportCSV('exceptions')" class="text-xs font-mono text-[#E34234] hover:underline font-bold">Download CSV</button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="text-[#626E65] border-b border-[#E8E0D2] text-[10px] uppercase">
+                <tr>
+                  <th class="py-2">Record Key</th>
+                  <th class="py-2">Failure Reason</th>
+                  <th class="py-2 text-right">One-Click Fix</th>
+                </tr>
+              </thead>
+              <tbody id="dash-exceptions-body" class="divide-y divide-[#E8E0D2]"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 2: SIMULATOR & TEST LAB (INTERACTIVE & SIMPLE)                     -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-simulator" class="tab-pane flex-1 p-6 overflow-y-auto flex-col gap-6">
+      
+      <!-- Part 1: Interactive Live Bill Calculator -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-6 shadow-xs flex flex-col gap-5">
+        <div>
+          <h2 class="text-base font-bold text-[#1B241E]">Live Bill Simulator</h2>
+          <p class="text-xs text-[#626E65] mt-0.5">Test the duration-based discount and tax calculation rules interactively.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Inputs -->
+          <div class="flex flex-col gap-4 text-xs font-mono">
+            <div>
+              <label class="block text-[#626E65] mb-1 font-bold">Base Plan Rate (₹)</label>
+              <input type="number" id="calc-base-input" value="999" oninput="calculateBill()" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl p-3 text-sm font-bold text-[#1B241E] outline-none focus:border-[#059669]">
+            </div>
+
+            <div>
+              <label class="block text-[#626E65] mb-1 font-bold">Subscription Duration</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="setCalcDuration(2)" id="dur-pill-2" class="dur-pill p-2.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-left hover:bg-[#F4EFE6]">
+                  <span class="font-bold block">0–2 Months</span>
+                  <span class="text-[10px] text-[#626E65]">0% Discount</span>
+                </button>
+                <button onclick="setCalcDuration(5)" id="dur-pill-5" class="dur-pill p-2.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-left hover:bg-[#F4EFE6]">
+                  <span class="font-bold block">3–6 Months</span>
+                  <span class="text-[10px] text-[#626E65]">5% Discount</span>
+                </button>
+                <button onclick="setCalcDuration(9)" id="dur-pill-9" class="dur-pill p-2.5 rounded-xl border border-[#A7F3D0] bg-[#E6F4EA] text-left font-bold text-[#059669]">
+                  <span class="font-bold block">7–12 Months</span>
+                  <span class="text-[10px] text-[#059669]">10% Discount (Example)</span>
+                </button>
+                <button onclick="setCalcDuration(18)" id="dur-pill-18" class="dur-pill p-2.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-left hover:bg-[#F4EFE6]">
+                  <span class="font-bold block">> 12 Months</span>
+                  <span class="text-[10px] text-[#626E65]">15% Discount</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[#626E65] mb-1 font-bold">Tax Rate</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="setCalcTax(0)" id="tax-pill-0" class="tax-pill p-2 rounded-lg border border-[#E8E0D2] bg-[#FAF7F2]">0% Tax</button>
+                <button onclick="setCalcTax(18)" id="tax-pill-18" class="tax-pill p-2 rounded-lg border border-[#A7F3D0] bg-[#E6F4EA] font-bold text-[#059669]">18% GST</button>
+                <button onclick="setCalcTax(28)" id="tax-pill-28" class="tax-pill p-2 rounded-lg border border-[#E8E0D2] bg-[#FAF7F2]">28% Luxury</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output Slip -->
+          <div class="bg-[#F4EFE6] border border-[#E8E0D2] rounded-2xl p-6 flex flex-col justify-between font-mono text-xs">
+            <div class="flex flex-col gap-2.5">
+              <span class="text-[10px] font-bold uppercase text-[#626E65] border-b border-[#E8E0D2] pb-2">Calculation Breakdown</span>
+              <div class="flex items-center justify-between">
+                <span class="text-[#626E65]">Base Plan Amount:</span>
+                <span id="slip-base" class="font-bold">₹999.00</span>
+              </div>
+              <div class="flex items-center justify-between text-[#059669]">
+                <span>Duration Discount (<span id="slip-disc-pct">10%</span>):</span>
+                <span id="slip-disc-amt" class="font-bold">-₹99.90</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#626E65]">Taxable Amount:</span>
+                <span id="slip-taxable" class="font-bold">₹899.10</span>
+              </div>
+              <div class="flex items-center justify-between text-[#626E65]">
+                <span>Tax (<span id="slip-tax-pct">18%</span>):</span>
+                <span id="slip-tax-amt" class="font-bold">+₹161.84</span>
+              </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-[#E8E0D2] flex items-center justify-between">
+              <span class="text-xs uppercase font-bold text-[#626E65]">Final Bill Amount</span>
+              <span id="slip-final" class="text-2xl font-bold text-[#059669]">₹1,060.94</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Part 2: 1-Click Error Scenario Injector -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+        <div>
+          <h2 class="text-base font-bold text-[#1B241E]">Test Anomaly Scenarios (1-Click Demo)</h2>
+          <p class="text-xs text-[#626E65] mt-0.5">Inject deliberate errors to demonstrate how the batch pipeline diverts records to EXCEPTION.DAT without crashing.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <button onclick="runScenario('NORMAL')" class="p-4 rounded-xl border border-[#A7F3D0] bg-[#E6F4EA] text-left flex flex-col gap-1 hover:bg-[#D1EBD8] transition-colors">
+            <span class="font-bold text-xs text-[#059669]">&bull; 1. Normal Run</span>
+            <span class="text-[11px] text-[#626E65]">Clean data with zero exceptions.</span>
+          </button>
+          <button onclick="runScenario('INACTIVE_CUST')" class="p-4 rounded-xl border border-[#FCA5A5] bg-[#FDECEB] text-left flex flex-col gap-1 hover:bg-[#FCD8D6] transition-colors">
+            <span class="font-bold text-xs text-[#E34234]">&bull; 2. Inactive Customer</span>
+            <span class="text-[11px] text-[#626E65]">Diverted by SUBVAL gate.</span>
+          </button>
+          <button onclick="runScenario('AMOUNT_MISMATCH')" class="p-4 rounded-xl border border-[#FCA5A5] bg-[#FDECEB] text-left flex flex-col gap-1 hover:bg-[#FCD8D6] transition-colors">
+            <span class="font-bold text-xs text-[#E34234]">&bull; 3. Payment Underpaid</span>
+            <span class="text-[11px] text-[#626E65]">Diverted by PAYPROC match.</span>
+          </button>
+          <button onclick="runScenario('DUPLICATE_PAY')" class="p-4 rounded-xl border border-[#FCA5A5] bg-[#FDECEB] text-left flex flex-col gap-1 hover:bg-[#FCD8D6] transition-colors">
+            <span class="font-bold text-xs text-[#E34234]">&bull; 4. Duplicate Payment</span>
+            <span class="text-[11px] text-[#626E65]">Intercepted duplicate key.</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 3: RECORDS MANAGER (CLEAN, FUNCTIONAL, EDIT & DELETE)             -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-records" class="tab-pane flex-1 p-6 overflow-y-auto flex-col gap-6">
+      
+      <!-- Record Segmented Filter & Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-[#FAF7F2] border border-[#E8E0D2] p-4 rounded-2xl shadow-xs">
+        <div class="flex items-center gap-1.5">
+          <button onclick="switchRecordView('customers')" id="rec-tab-customers" class="px-4 py-1.5 rounded-xl text-xs font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0]">
+            Customers (<span id="rcnt-customers">10</span>)
+          </button>
+          <button onclick="switchRecordView('subscriptions')" id="rec-tab-subscriptions" class="px-4 py-1.5 rounded-xl text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6]">
+            Subscriptions (<span id="rcnt-subscriptions">10</span>)
+          </button>
+          <button onclick="switchRecordView('plans')" id="rec-tab-plans" class="px-4 py-1.5 rounded-xl text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6]">
+            Plans (<span id="rcnt-plans">5</span>)
+          </button>
+          <button onclick="switchRecordView('payments')" id="rec-tab-payments" class="px-4 py-1.5 rounded-xl text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6]">
+            Payments (<span id="rcnt-payments">7</span>)
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="rec-search-input" oninput="filterRecords(this.value)" placeholder="Search records..." class="px-3 py-1.5 text-xs font-mono bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl outline-none focus:border-[#059669] w-48">
+          <button onclick="openAddModal()" class="px-3.5 py-1.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold font-mono shadow-xs flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Record</span>
+          </button>
+          <button onclick="exportCSV(activeRecordType)" class="px-3.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F4EFE6] text-[#059669] border border-[#A7F3D0] rounded-xl text-xs font-bold font-mono">
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Records Table -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-[#F4EFE6] text-[#626E65] border-b border-[#E8E0D2] uppercase text-[10px]">
+              <tr id="records-head"></tr>
+            </thead>
+            <tbody id="records-body" class="divide-y divide-[#E8E0D2]"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 4: GENERATED REPORTS (CLEAN VIEW & EXPORT)                         -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-reports" class="tab-pane flex-1 p-6 overflow-y-auto flex-col gap-6">
+      
+      <!-- Report Selector -->
+      <div class="flex items-center justify-between bg-[#FAF7F2] border border-[#E8E0D2] p-4 rounded-2xl shadow-xs">
+        <div class="flex items-center gap-2">
+          <button onclick="loadReport('BILLRPT.TXT')" id="rep-btn-bill" class="px-4 py-1.5 text-xs font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0] rounded-xl">
+            Billing Report (BILLRPT.TXT)
+          </button>
+          <button onclick="loadReport('REVRPT.TXT')" id="rep-btn-rev" class="px-4 py-1.5 text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6] rounded-xl">
+            Revenue Report (REVRPT.TXT)
+          </button>
+          <button onclick="loadReport('EXCPRPT.TXT')" id="rep-btn-excp" class="px-4 py-1.5 text-xs font-mono font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5] rounded-xl">
+            Exceptions Report (EXCPRPT.TXT)
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyCurrentReport()" class="px-3.5 py-1.5 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl font-bold">
+            Copy Text
+          </button>
+          <button onclick="downloadCurrentReport()" class="px-3.5 py-1.5 text-xs font-mono bg-[#059669] hover:bg-[#047857] text-white rounded-xl font-bold shadow-xs">
+            Download File
+          </button>
+        </div>
+      </div>
+
+      <!-- Spool Display Window -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl overflow-hidden shadow-xs flex-1 flex flex-col">
+        <div class="px-5 py-2.5 bg-[#F4EFE6] border-b border-[#E8E0D2] flex items-center justify-between text-xs font-mono">
+          <span id="rep-view-title" class="font-bold text-[#1B241E]">BILLRPT.TXT</span>
+          <span class="text-[#626E65]">Line Sequential &bull; LRECL=132</span>
+        </div>
+        <pre id="spool-viewer" class="p-6 text-xs font-mono bg-[#FDFCF9] text-[#1B241E] h-[500px] overflow-y-auto leading-relaxed"></pre>
+      </div>
+
+    </section>
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 5: 3D MODEL (FULL DETAILED HARDWARE ARCHITECTURE AS BEFORE)       -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-3d" class="tab-pane flex-1 relative flex flex-col h-[calc(100vh-140px)]">
+      
+      <div id="canvas-container" class="w-full flex-1 relative bg-[#FAF7F2] cursor-grab active:cursor-grabbing">
+        
+        <!-- Legend Overlay in Warm Ivory & Emerald Green -->
+        <div class="absolute top-4 left-4 z-20 bg-[#FAF7F2]/95 border border-[#E8E0D2] p-3.5 rounded-xl shadow-xs backdrop-blur-xs flex flex-col gap-1.5 pointer-events-none text-xs font-mono">
+          <span class="text-[10px] uppercase text-[#626E65] font-bold">Mainframe Hardware Cluster</span>
+          <div class="flex items-center gap-2 text-[#059669] font-medium"><span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span> Valid Processing Pipeline</div>
+          <div class="flex items-center gap-2 text-[#E34234] font-medium"><span class="w-2.5 h-2.5 rounded-full bg-[#E34234]"></span> EXCEPTION.DAT Isolation Silo</div>
+        </div>
+
+        <!-- 3D Controls Helper -->
+        <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
+          <button onclick="reset3DCamera()" class="px-3.5 py-1.5 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl shadow-xs flex items-center gap-1.5 font-medium">
+            <i data-lucide="camera" class="w-3.5 h-3.5 text-[#626E65]"></i>
+            <span>Reset View</span>
+          </button>
+          <button onclick="toggle3DSpeed()" id="btn-3d-speed" class="px-3.5 py-1.5 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl shadow-xs font-bold">
+            1.0x Speed
+          </button>
+        </div>
+      </div>
+
+      <!-- HORIZONTAL STEP SCRUBBER SLIDER -->
+      <div class="w-full bg-[#FAF7F2] border-t border-[#E8E0D2] px-6 py-2.5 z-40">
+        <div class="max-w-5xl mx-auto flex flex-col gap-1.5">
+          
+          <div class="flex items-center justify-between text-xs font-mono">
+            <div class="flex items-center gap-2">
+              <span class="text-[#626E65] font-bold uppercase text-[10px]">Active Step:</span>
+              <span id="slider-step-name" class="px-2 py-0.5 rounded bg-[#E6F4EA] text-[#059669] font-bold border border-[#A7F3D0]">
+                STEP02: SUBVAL (Validation Gate)
+              </span>
+              <span id="slider-rc-name" class="text-[#E34234] font-semibold text-[11px]">RC=0004 (Exceptions Diverted)</span>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="scrubPrev()" class="p-1 rounded hover:bg-[#F4EFE6] text-[#1B241E]" title="Previous Step"><i data-lucide="skip-back" class="w-3.5 h-3.5"></i></button>
+              <button onclick="toggleScrubPlay()" id="scrub-play-btn" class="px-2.5 py-1 bg-[#059669] hover:bg-[#047857] text-white font-semibold rounded text-[11px] flex items-center gap-1">
+                <i data-lucide="play" class="w-3 h-3 fill-white"></i><span>Play</span>
+              </button>
+              <button onclick="scrubNext()" class="p-1 rounded hover:bg-[#F4EFE6] text-[#1B241E]" title="Next Step"><i data-lucide="skip-forward" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+
+          <!-- Range Slider Track -->
+          <div class="relative py-1">
+            <input type="range" id="step-slider" min="1" max="7" value="2" step="1" oninput="seek3DStep(this.value)">
+
+            <div class="grid grid-cols-7 text-center pt-1 font-mono text-[10px]">
+              <div onclick="seek3DStep(1)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-1">01 IDCAMS</div>
+              <div onclick="seek3DStep(2)" class="cursor-pointer font-bold text-[#059669]" id="st-lbl-2">02 SUBVAL</div>
+              <div onclick="seek3DStep(3)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-3">03 BILLPROC</div>
+              <div onclick="seek3DStep(4)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-4">04 PAYPROC</div>
+              <div onclick="seek3DStep(5)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-5">05 REVPROC</div>
+              <div onclick="seek3DStep(6)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-6">06 REPORT</div>
+              <div onclick="seek3DStep(7)" class="cursor-pointer text-[#626E65] hover:text-[#059669]" id="st-lbl-7">07 CLEANUP</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- ADD RECORD MODAL                                                          -->
+  <!-- ========================================================================= -->
+  <div id="modal-add" class="hidden fixed inset-0 z-50 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-[#E8E0D2] pb-3">
+        <h3 class="text-sm font-bold font-mono text-[#1B241E] uppercase" id="add-modal-title">Add Customer</h3>
+        <button onclick="closeAddModal()" class="text-[#626E65] hover:text-[#1B241E]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs font-mono" id="add-modal-fields"></div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#E8E0D2]">
+        <button onclick="closeAddModal()" class="px-4 py-2 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl">Cancel</button>
+        <button onclick="submitNewRecord()" class="px-5 py-2 text-xs font-mono bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-xl shadow-xs">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC WITH INTERACTIVE VOICE OVER ASSISTANT                    -->
+  <!-- ========================================================================= -->
+  <script>
+    let activeTab = 'cycle';
+    let activeRecordType = 'customers';
+    let currentReport = 'BILLRPT.TXT';
+    let calcBase = 999.0;
+    let calcDuration = 9;
+    let calcTaxRate = 18;
+    let datasetData = {};
+    let reportsData = {};
+    let isVoiceMuted = false;
+    let lastSpokenText = "";
+    let isTourRunning = false;
+
+    // -------------------------------------------------------------------------
+    // AI VOICE OVER ASSISTANT ENGINE (SpeechSynthesis)
+    // -------------------------------------------------------------------------
+    function speakAssistant(text, title = "SmartBill Guide") {
+      lastSpokenText = text;
+
+      // Update Speech Bubble UI
+      const bubble = document.getElementById('assistant-bubble');
+      const titleEl = document.getElementById('assistant-title');
+      const textEl = document.getElementById('assistant-text');
+      const waveEl = document.getElementById('soundwave-container');
+
+      if (bubble.classList.contains('hidden')) {
+        bubble.classList.remove('hidden');
+      }
+
+      titleEl.textContent = title;
+      textEl.textContent = text;
+
+      // If muted, don't play audio
+      if (isVoiceMuted || !('speechSynthesis' in window)) {
+        waveEl.classList.add('hidden');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Select natural English voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const engVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('David') || v.name.includes('Zira')));
+      if (engVoice) utterance.voice = engVoice;
+
+      utterance.onstart = () => {
+        waveEl.classList.remove('hidden');
+      };
+      utterance.onend = () => {
+        waveEl.classList.add('hidden');
+      };
+      utterance.onerror = () => {
+        waveEl.classList.add('hidden');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleVoiceMute() {
+      isVoiceMuted = !isVoiceMuted;
+      const btn = document.getElementById('btn-voice-toggle');
+      if (isVoiceMuted) {
+        window.speechSynthesis.cancel();
+        document.getElementById('soundwave-container').classList.add('hidden');
+        btn.innerHTML = `<i data-lucide="volume-x" class="w-3.5 h-3.5 text-[#E34234]"></i>`;
+        showToast('info', 'Assistant voice muted.');
+      } else {
+        btn.innerHTML = `<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#059669]"></i>`;
+        showToast('success', 'Assistant voice unmuted.');
+        if (lastSpokenText) speakAssistant(lastSpokenText);
+      }
+      lucide.createIcons();
+    }
+
+    function replayCurrentSpeech() {
+      if (lastSpokenText) {
+        speakAssistant(lastSpokenText);
+      }
+    }
+
+    function toggleAssistantBubble() {
+      const bubble = document.getElementById('assistant-bubble');
+      bubble.classList.toggle('hidden');
+    }
+
+    function explainBillingLogic() {
+      switchTab('simulator');
+      speakAssistant(
+        "Here is how billing works: Subscriptions receive discounts based on duration. Less than 3 months gets 0%, 3 to 6 months gets 5%, 7 to 12 months gets 10%, and over a year gets 15%. Then, 18% GST is added to calculate the final bill.",
+        "Billing Rule Explanation"
+      );
+    }
+
+    function explainExceptionsLogic() {
+      switchTab('cycle');
+      speakAssistant(
+        "When an account has an error, like an inactive customer or an underpaid amount, the mainframe does not crash. It diverts that defective record to EXCEPTION.DAT with a code 0004, while valid customer bills continue processing normally!",
+        "Exception Handling Rule"
+      );
+    }
+
+    async function startGuidedTour() {
+      if (isTourRunning) return;
+      isTourRunning = true;
+
+      switchTab('cycle');
+      speakAssistant(
+        "Welcome to the SmartBill Guided Tour! This platform automates subscription billing on an enterprise mainframe batch architecture. Let us execute a billing cycle now.",
+        "Guided Tour • Step 1"
+      );
+      await new Promise(r => setTimeout(r, 6500));
+
+      await runBillingCycle();
+
+      speakAssistant(
+        "Notice our 4 summary cards. We generated 23,711 rupees in valid invoices, matched 7,783 rupees in cash, and isolated 4 defective records.",
+        "Guided Tour • Step 2"
+      );
+      await new Promise(r => setTimeout(r, 7000));
+
+      switchTab('simulator');
+      speakAssistant(
+        "In the Calculator and Lab, you can test different duration discounts, or inject test anomalies like an underpaid transaction or an expired subscription with one click.",
+        "Guided Tour • Step 3"
+      );
+      await new Promise(r => setTimeout(r, 7000));
+
+      switchTab('3d');
+      speakAssistant(
+        "Finally, this 3D model visualizes the mainframe hardware cluster. Green packets show valid records flowing through, while red packets divert into the exception silo. Use the timeline slider below to inspect any step!",
+        "Guided Tour • Step 4"
+      );
+
+      isTourRunning = false;
+    }
+
+    // -------------------------------------------------------------------------
+    // TOAST NOTIFICATIONS
+    // -------------------------------------------------------------------------
+    function showToast(type, msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const isErr = type === 'error';
+      const isWarn = type === 'warning';
+      const bg = isErr ? 'bg-[#FDECEB]' : (isWarn ? 'bg-[#FDECEB]' : 'bg-[#E6F4EA]');
+      const border = isErr ? 'border-[#FCA5A5]' : (isWarn ? 'border-[#FCA5A5]' : 'border-[#A7F3D0]');
+      const color = isErr ? 'text-[#E34234]' : (isWarn ? 'text-[#E34234]' : 'text-[#059669]');
+      const icon = isErr ? 'alert-triangle' : (isWarn ? 'alert-circle' : 'check-circle');
+
+      toast.className = `toast-anim p-3 rounded-xl border ${bg} ${border} ${color} text-xs font-mono shadow-md flex items-center gap-2 pointer-events-auto`;
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 shrink-0"></i><span class="font-medium">${msg}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // -------------------------------------------------------------------------
+    // TAB SWITCHING
+    // -------------------------------------------------------------------------
+    function switchTab(tabId) {
+      activeTab = tabId;
+
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.className = "nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5";
+      });
+
+      const target = document.getElementById('tab-content-' + tabId);
+      if (target) target.classList.add('active');
+
+      const btn = document.getElementById('tab-btn-' + tabId);
+      if (btn) {
+        btn.className = "nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5";
+      }
+
+      if (tabId === 'cycle') {
+        speakAssistant("This is the Billing Cycle dashboard. Hit 'Run Billing Cycle Now' to process customer subscriptions, apply duration discounts, and reconcile payments.", "Billing Cycle");
+      } else if (tabId === 'simulator') {
+        speakAssistant("This is the Billing Calculator and Test Lab. You can experiment with duration discounts or inject test errors like underpaid bills with one click.", "Calculator & Lab");
+      } else if (tabId === 'records') {
+        speakAssistant("Here are your Master Datasets: Customers, Subscriptions, Plans, and Payments. You can search, add new records, delete, and export CSVs.", "Records Manager");
+        renderRecordsTable();
+      } else if (tabId === 'reports') {
+        speakAssistant("Here are the official Mainframe Batch Reports: Billing statements, Revenue summaries, and Diverted exception logs.", "Batch Reports");
+        loadReport(currentReport);
+      } else if (tabId === '3d') {
+        speakAssistant("Welcome to the 3D Mainframe simulation. Watch green valid records flow through while red exceptions divert to the silo. Use the timeline slider below to inspect each step!", "3D Hardware Model");
+        if (!renderer) initThree();
+        onWindowResize();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // INITIALIZATION & FETCHING
+    // -------------------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchDatasets();
+      fetchReports();
+      calculateBill();
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
+
+      setTimeout(() => {
+        speakAssistant(
+          "Welcome to SmartBill! I am your AI assistant. Hit 'Run Billing Cycle Now' to start batch processing, or click 'Guided Tour' for a complete walkthrough.",
+          "Welcome to SmartBill"
+        );
+      }, 900);
+    });
+
+    async function fetchDatasets() {
+      try {
+        const resp = await fetch('/api/datasets');
+        datasetData = await resp.json();
+        updateDashboardView();
+        renderRecordsTable();
+      } catch (err) {
+        console.error("Failed to load datasets:", err);
+      }
+    }
+
+    async function fetchReports() {
+      try {
+        const resp = await fetch('/api/reports');
+        reportsData = await resp.json();
+        loadReport(currentReport);
+      } catch (err) {
+        console.error("Failed to load reports:", err);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // RUN BILLING CYCLE
+    // -------------------------------------------------------------------------
+    async function runBillingCycle() {
+      const btn = document.getElementById('btn-main-run');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin inline-block mr-1">&bull;</span> Processing Cycle...`;
+
+      speakAssistant(
+        "Submitting master batch job SUBBILL01. Validating records, calculating duration discounts and tax, and reconciling incoming payments.",
+        "Batch Execution"
+      );
+
+      try {
+        const resp = await fetch('/api/batch/run', { method: 'POST' });
+        const data = await resp.json();
+
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+        showToast('success', `Billing cycle completed in ${data.duration_sec}s.`);
+
+        speakAssistant(
+          `Billing cycle completed successfully in ${data.duration_sec} seconds! 6 valid invoices generated, and 4 exceptions were safely diverted.`,
+          "Cycle Complete"
+        );
+
+        await fetchDatasets();
+        await fetchReports();
+      } catch (err) {
+        showToast('error', "Cycle execution failed: " + err.message);
+        speakAssistant("An error occurred during batch execution: " + err.message, "Batch Alert");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-white"></i><span>Run Billing Cycle Now</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // DASHBOARD RENDERING
+    // -------------------------------------------------------------------------
+    function updateDashboardView() {
+      const bills = datasetData.bills || [];
+      const payouts = datasetData.payouts || [];
+      const excps = datasetData.exceptions || [];
+
+      let totalBilled = 0;
+      bills.forEach(b => totalBilled += b.final_amt);
+
+      let totalRecv = 0;
+      payouts.forEach(p => totalRecv += p.amount);
+
+      let totalOut = Math.max(0, totalBilled - totalRecv);
+
+      document.getElementById('dash-billed').textContent = `₹${totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('dash-received').textContent = `₹${totalRecv.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('dash-outstanding').textContent = `₹${totalOut.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('dash-exceptions').textContent = excps.length;
+
+      // Populate Valid Invoices Table
+      const invBody = document.getElementById('dash-invoices-body');
+      invBody.innerHTML = '';
+      bills.slice(0, 6).forEach(b => {
+        invBody.innerHTML += `
+          <tr class="hover:bg-[#F4EFE6]/50">
+            <td class="py-2.5 font-bold text-[#059669]">${b.bill_id}</td>
+            <td class="py-2.5">${b.sub_id}</td>
+            <td class="py-2.5 text-[#059669] font-semibold">-₹${b.disc_amt.toFixed(2)} (${b.disc_pct}%)</td>
+            <td class="py-2.5 text-[#626E65]">₹${b.tax_amt.toFixed(2)}</td>
+            <td class="py-2.5 font-bold text-right text-[#059669]">₹${b.final_amt.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      // Populate Exceptions Table
+      const excpBody = document.getElementById('dash-exceptions-body');
+      excpBody.innerHTML = '';
+      if (excps.length === 0) {
+        excpBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-[#626E65]">Zero exceptions. All records validated.</td></tr>`;
+      } else {
+        excps.forEach(e => {
+          excpBody.innerHTML += `
+            <tr class="hover:bg-[#FDECEB]/30">
+              <td class="py-2.5 font-bold">${e.record_key}</td>
+              <td class="py-2.5">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5]">${e.err_code}</span>
+                <span class="text-[#1B241E] text-[11px] ml-1">${e.err_desc}</span>
+              </td>
+              <td class="py-2.5 text-right">
+                <button onclick="quickFix('${e.record_key}', '${e.err_code}')" class="px-2.5 py-1 bg-[#059669] hover:bg-[#047857] text-white rounded-lg text-[10px] font-bold">
+                  Fix &amp; Rerun
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // Update Records Counts
+      if (document.getElementById('rcnt-customers')) document.getElementById('rcnt-customers').textContent = (datasetData.customers || []).length;
+      if (document.getElementById('rcnt-subscriptions')) document.getElementById('rcnt-subscriptions').textContent = (datasetData.subscriptions || []).length;
+      if (document.getElementById('rcnt-plans')) document.getElementById('rcnt-plans').textContent = (datasetData.plans || []).length;
+      if (document.getElementById('rcnt-payments')) document.getElementById('rcnt-payments').textContent = (datasetData.payments || []).length;
+    }
+
+    // -------------------------------------------------------------------------
+    // QUICK FIX & RERUN
+    // -------------------------------------------------------------------------
+    async function quickFix(key, code) {
+      speakAssistant(`Repairing record ${key}. Setting to valid status and rerunning the cycle.`, "Auto-Fix");
+      try {
+        const resp = await fetch('/api/datasets/fix-exception', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ record_key: key, err_code: code })
+        });
+        const data = await resp.json();
+        showToast('success', data.message);
+        await runBillingCycle();
+      } catch (err) {
+        showToast('error', "Fix failed: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // SCENARIO RUNNER (TEST LAB)
+    // -------------------------------------------------------------------------
+    async function runScenario(name) {
+      const descriptions = {
+        'NORMAL': 'Testing normal run with 100% valid records.',
+        'INACTIVE_CUST': 'Injecting an inactive customer to verify SUBVAL gate interception.',
+        'AMOUNT_MISMATCH': 'Injecting an underpaid payment to test amount mismatch detection.',
+        'DUPLICATE_PAY': 'Submitting a duplicate payment key to test double-credit prevention.'
+      };
+
+      speakAssistant(descriptions[name] || `Injecting scenario ${name}...`, "Scenario Test");
+
+      try {
+        const resp = await fetch('/api/datasets/inject', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenario: name })
+        });
+        const data = await resp.json();
+        showToast('warning', data.message);
+        await runBillingCycle();
+        switchTab('cycle');
+      } catch (err) {
+        showToast('error', "Scenario failed: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // LIVE BILL SIMULATOR
+    // -------------------------------------------------------------------------
+    function setCalcDuration(m) {
+      calcDuration = m;
+      [2, 5, 9, 18].forEach(x => {
+        const b = document.getElementById('dur-pill-' + x);
+        if (x === m) {
+          b.className = "dur-pill p-2.5 rounded-xl border border-[#A7F3D0] bg-[#E6F4EA] text-left font-bold text-[#059669]";
+        } else {
+          b.className = "dur-pill p-2.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-left hover:bg-[#F4EFE6]";
+        }
+      });
+      calculateBill();
+    }
+
+    function setCalcTax(t) {
+      calcTaxRate = t;
+      [0, 18, 28].forEach(x => {
+        const b = document.getElementById('tax-pill-' + x);
+        if (x === t) {
+          b.className = "tax-pill p-2 rounded-lg border border-[#A7F3D0] bg-[#E6F4EA] font-bold text-[#059669]";
+        } else {
+          b.className = "tax-pill p-2 rounded-lg border border-[#E8E0D2] bg-[#FAF7F2]";
+        }
+      });
+      calculateBill();
+    }
+
+    function calculateBill() {
+      const base = parseFloat(document.getElementById('calc-base-input').value || 999);
+      let discPct = 0;
+      if (calcDuration >= 3 && calcDuration <= 6) discPct = 5;
+      else if (calcDuration >= 7 && calcDuration <= 12) discPct = 10;
+      else if (calcDuration > 12) discPct = 15;
+
+      const discAmt = base * (discPct / 100.0);
+      const taxable = base - discAmt;
+      const taxAmt = taxable * (calcTaxRate / 100.0);
+      const finalAmt = taxable + taxAmt;
+
+      document.getElementById('slip-base').textContent = `₹${base.toFixed(2)}`;
+      document.getElementById('slip-disc-pct').textContent = `${discPct}%`;
+      document.getElementById('slip-disc-amt').textContent = `-₹${discAmt.toFixed(2)}`;
+      document.getElementById('slip-taxable').textContent = `₹${taxable.toFixed(2)}`;
+      document.getElementById('slip-tax-pct').textContent = `${calcTaxRate}%`;
+      document.getElementById('slip-tax-amt').textContent = `+₹${taxAmt.toFixed(2)}`;
+      document.getElementById('slip-final').textContent = `₹${finalAmt.toFixed(2)}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // RECORDS MANAGER (VIEW, EDIT, DELETE, ADD)
+    // -------------------------------------------------------------------------
+    function switchRecordView(type) {
+      activeRecordType = type;
+      ['customers', 'subscriptions', 'plans', 'payments'].forEach(t => {
+        const btn = document.getElementById('rec-tab-' + t);
+        if (t === type) {
+          btn.className = "px-4 py-1.5 rounded-xl text-xs font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0]";
+        } else {
+          btn.className = "px-4 py-1.5 rounded-xl text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6]";
+        }
+      });
+      renderRecordsTable();
+    }
+
+    function filterRecords(term) {
+      renderRecordsTable(term.toLowerCase().trim());
+    }
+
+    function renderRecordsTable(term = '') {
+      const head = document.getElementById('records-head');
+      const body = document.getElementById('records-body');
+      head.innerHTML = '';
+      body.innerHTML = '';
+
+      if (activeRecordType === 'customers') {
+        head.innerHTML = `
+          <th class="py-2.5 px-4">Customer ID</th>
+          <th class="py-2.5 px-4">Name</th>
+          <th class="py-2.5 px-4">Email</th>
+          <th class="py-2.5 px-4">Phone</th>
+          <th class="py-2.5 px-4">Status</th>
+          <th class="py-2.5 px-4 text-right">Action</th>
+        `;
+        const list = (datasetData.customers || []).filter(c => !term || c.cust_id.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
+        list.forEach(c => {
+          body.innerHTML += `
+            <tr class="hover:bg-[#F4EFE6]/50">
+              <td class="py-2.5 px-4 font-bold text-[#059669]">${c.cust_id}</td>
+              <td class="py-2.5 px-4 font-semibold">${c.name}</td>
+              <td class="py-2.5 px-4 text-[#626E65]">${c.email}</td>
+              <td class="py-2.5 px-4 text-[#626E65]">${c.phone}</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'A' ? 'bg-[#E6F4EA] text-[#059669]' : 'bg-[#FDECEB] text-[#E34234]'}">${c.status === 'A' ? 'ACTIVE' : 'INACTIVE'}</span></td>
+              <td class="py-2.5 px-4 text-right"><button onclick="deleteRecord('customers', '${c.cust_id}')" class="text-[#E34234] hover:underline font-bold">Delete</button></td>
+            </tr>
+          `;
+        });
+      } else if (activeRecordType === 'subscriptions') {
+        head.innerHTML = `
+          <th class="py-2.5 px-4">Sub ID</th>
+          <th class="py-2.5 px-4">Customer</th>
+          <th class="py-2.5 px-4">Plan</th>
+          <th class="py-2.5 px-4">Duration</th>
+          <th class="py-2.5 px-4">Status</th>
+          <th class="py-2.5 px-4 text-right">Action</th>
+        `;
+        const list = (datasetData.subscriptions || []).filter(s => !term || s.sub_id.toLowerCase().includes(term) || s.cust_id.toLowerCase().includes(term));
+        list.forEach(s => {
+          body.innerHTML += `
+            <tr class="hover:bg-[#F4EFE6]/50">
+              <td class="py-2.5 px-4 font-bold text-[#059669]">${s.sub_id}</td>
+              <td class="py-2.5 px-4">${s.cust_id}</td>
+              <td class="py-2.5 px-4">${s.plan_id}</td>
+              <td class="py-2.5 px-4 font-mono">${s.duration_months} mo</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.status === 'A' ? 'bg-[#E6F4EA] text-[#059669]' : 'bg-[#FDECEB] text-[#E34234]'}">${s.status === 'A' ? 'ACTIVE' : 'EXPIRED'}</span></td>
+              <td class="py-2.5 px-4 text-right"><button onclick="deleteRecord('subscriptions', '${s.sub_id}')" class="text-[#E34234] hover:underline font-bold">Delete</button></td>
+            </tr>
+          `;
+        });
+      } else if (activeRecordType === 'plans') {
+        head.innerHTML = `
+          <th class="py-2.5 px-4">Plan ID</th>
+          <th class="py-2.5 px-4">Name</th>
+          <th class="py-2.5 px-4">Base Amount</th>
+          <th class="py-2.5 px-4">Status</th>
+          <th class="py-2.5 px-4 text-right">Action</th>
+        `;
+        (datasetData.plans || []).forEach(p => {
+          body.innerHTML += `
+            <tr class="hover:bg-[#F4EFE6]/50">
+              <td class="py-2.5 px-4 font-bold text-[#059669]">${p.plan_id}</td>
+              <td class="py-2.5 px-4 font-semibold">${p.name}</td>
+              <td class="py-2.5 px-4 font-bold">₹${p.base_amount.toFixed(2)}</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'A' ? 'bg-[#E6F4EA] text-[#059669]' : 'bg-[#FDECEB] text-[#E34234]'}">${p.status === 'A' ? 'ACTIVE' : 'INACTIVE'}</span></td>
+              <td class="py-2.5 px-4 text-right"><button onclick="deleteRecord('plans', '${p.plan_id}')" class="text-[#E34234] hover:underline font-bold">Delete</button></td>
+            </tr>
+          `;
+        });
+      } else if (activeRecordType === 'payments') {
+        head.innerHTML = `
+          <th class="py-2.5 px-4">Txn ID</th>
+          <th class="py-2.5 px-4">Subscription</th>
+          <th class="py-2.5 px-4">Amount</th>
+          <th class="py-2.5 px-4">Status</th>
+          <th class="py-2.5 px-4 text-right">Action</th>
+        `;
+        const list = (datasetData.payments || []).filter(p => !term || p.txn_id.toLowerCase().includes(term) || p.sub_id.toLowerCase().includes(term));
+        list.forEach(p => {
+          body.innerHTML += `
+            <tr class="hover:bg-[#F4EFE6]/50">
+              <td class="py-2.5 px-4 font-bold">${p.txn_id}</td>
+              <td class="py-2.5 px-4 text-[#059669]">${p.sub_id}</td>
+              <td class="py-2.5 px-4 font-bold">₹${p.amount.toFixed(2)}</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'SUCCESS' ? 'bg-[#E6F4EA] text-[#059669]' : 'bg-[#FDECEB] text-[#E34234]'}">${p.status}</span></td>
+              <td class="py-2.5 px-4 text-right"><button onclick="deleteRecord('payments', '${p.txn_id}')" class="text-[#E34234] hover:underline font-bold">Delete</button></td>
+            </tr>
+          `;
+        });
+      }
+    }
+
+    async function deleteRecord(dsName, id) {
+      if (!confirm(`Delete record ${id}?`)) return;
+      try {
+        const resp = await fetch(`/api/datasets/${dsName}/${id}`, { method: 'DELETE' });
+        const data = await resp.json();
+        showToast('info', data.message);
+        await fetchDatasets();
+      } catch (err) {
+        showToast('error', "Delete failed: " + err.message);
+      }
+    }
+
+    function exportCSV(dsName) {
+      window.location.href = `/api/datasets/export/${dsName}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // ADD MODAL
+    // -------------------------------------------------------------------------
+    function openAddModal() {
+      const modal = document.getElementById('modal-add');
+      const title = document.getElementById('add-modal-title');
+      const fields = document.getElementById('add-modal-fields');
+
+      if (activeRecordType === 'customers') {
+        title.textContent = "Add Customer";
+        fields.innerHTML = `
+          <div><label class="block mb-1">Customer ID</label><input type="text" id="m-inp-1" value="CUST000199" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Full Name</label><input type="text" id="m-inp-2" value="New Enterprise Client" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Email</label><input type="email" id="m-inp-3" value="client@enterprise.com" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Phone</label><input type="text" id="m-inp-4" value="+91-9876500000" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+        `;
+      } else if (activeRecordType === 'subscriptions') {
+        title.textContent = "Provision Subscription";
+        fields.innerHTML = `
+          <div><label class="block mb-1">Subscription ID</label><input type="text" id="m-inp-1" value="SUB1000099" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Customer ID</label><input type="text" id="m-inp-2" value="CUST000101" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Plan ID</label><input type="text" id="m-inp-3" value="PLAN-001" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Duration (Months)</label><input type="number" id="m-inp-4" value="12" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+        `;
+      } else if (activeRecordType === 'plans') {
+        title.textContent = "Add Plan Tier";
+        fields.innerHTML = `
+          <div><label class="block mb-1">Plan ID (e.g. PLAN-005)</label><input type="text" id="m-inp-1" value="PLAN-005" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Plan Name</label><input type="text" id="m-inp-2" value="Enterprise Ultra 10G" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Base Amount (₹)</label><input type="number" id="m-inp-3" value="1499.00" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Billing Cycle</label><select id="m-inp-4" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"><option value="M">Monthly (M)</option><option value="A">Annual (A)</option></select></div>
+        `;
+      } else {
+        title.textContent = "Add Payment Transaction";
+        fields.innerHTML = `
+          <div><label class="block mb-1">Transaction ID</label><input type="text" id="m-inp-1" value="TXN202610999" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Subscription ID</label><input type="text" id="m-inp-2" value="SUB1000001" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+          <div><label class="block mb-1">Remittance Amount (₹)</label><input type="number" id="m-inp-3" value="1060.94" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded p-2"></div>
+        `;
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('modal-add').classList.add('hidden');
+    }
+
+    async function submitNewRecord() {
+      const v1 = document.getElementById('m-inp-1').value.trim();
+      const v2 = document.getElementById('m-inp-2').value.trim();
+      const v3 = document.getElementById('m-inp-3').value.trim();
+      const v4 = document.getElementById('m-inp-4') ? document.getElementById('m-inp-4').value.trim() : '';
+
+      try {
+        let endpoint = '';
+        let payload = {};
+
+        if (activeRecordType === 'customers') {
+          endpoint = '/api/datasets/customer';
+          payload = { cust_id: v1, name: v2, email: v3, phone: v4, status: 'A', reg_date: '2024-01-15' };
+        } else if (activeRecordType === 'subscriptions') {
+          endpoint = '/api/datasets/subscription';
+          payload = { sub_id: v1, cust_id: v2, plan_id: v3, duration_months: parseInt(v4 || '12'), status: 'A', next_bill_date: '2026-10-01' };
+        } else if (activeRecordType === 'plans') {
+          endpoint = '/api/datasets/plan';
+          payload = { plan_id: v1, name: v2, base_amount: parseFloat(v3 || '0'), cycle: v4 || 'M', status: 'A' };
+        } else {
+          endpoint = '/api/datasets/payment';
+          payload = { txn_id: v1, sub_id: v2, amount: parseFloat(v3 || '0'), mode: 'UPI', status: 'SUCCESS' };
+        }
+
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        closeAddModal();
+        showToast('success', data.message);
+        await fetchDatasets();
+      } catch (err) {
+        showToast('error', "Save failed: " + err.message);
+      }
+    }
+
+    async function resetToFactoryState() {
+      if (!confirm("Reset all datasets to factory state?")) return;
+      try {
+        const resp = await fetch('/api/datasets/reset', { method: 'POST' });
+        const data = await resp.json();
+        showToast('info', data.message);
+        speakAssistant("All datasets have been restored to clean factory state.", "Factory Reset");
+        await fetchDatasets();
+        await fetchReports();
+      } catch (err) {
+        showToast('error', "Reset failed: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // REPORTS VIEWER
+    // -------------------------------------------------------------------------
+    function loadReport(name) {
+      currentReport = name;
+      ['bill', 'rev', 'excp'].forEach(k => {
+        const b = document.getElementById('rep-btn-' + k);
+        if (b) {
+          const match = (k === 'bill' && name.includes('BILL')) || (k === 'rev' && name.includes('REV')) || (k === 'excp' && name.includes('EXCP'));
+          if (match) {
+            b.className = k === 'excp'
+              ? "px-4 py-1.5 text-xs font-mono font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5] rounded-xl"
+              : "px-4 py-1.5 text-xs font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0] rounded-xl";
+          } else {
+            b.className = "px-4 py-1.5 text-xs font-mono font-medium text-[#626E65] hover:bg-[#F4EFE6] rounded-xl";
+          }
+        }
+      });
+
+      document.getElementById('rep-view-title').textContent = name;
+      document.getElementById('spool-viewer').textContent = reportsData[name] || "Report pending batch execution.";
+    }
+
+    function copyCurrentReport() {
+      navigator.clipboard.writeText(document.getElementById('spool-viewer').textContent);
+      showToast('success', 'Report copied to clipboard.');
+    }
+
+    function downloadCurrentReport() {
+      const txt = document.getElementById('spool-viewer').textContent;
+      const blob = new Blob([txt], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = currentReport;
+      a.click();
+    }
+
+    // -------------------------------------------------------------------------
+    // 3D SIMULATION (THREE.JS AT LAST TAB - RESTORED FULL HARDWARE MODELS)
+    // -------------------------------------------------------------------------
+    let scene, camera, renderer, controls;
+    let tapeReel1, tapeReel2, paperMesh;
+    let movingPackets = [];
+    let simSpeed3D = 1.0;
+    let isScrubPlaying = false;
+    let scrubInterval = null;
+
+    const stepInfo = {
+      1: {
+        pos: [-14, 8, 14], target: [-14, 2, 0],
+        name: "STEP01: IDCAMS (VSAM Clusters)", rc: "RC=0000",
+        speech: "Step 1 is IDCAMS. This utility purges scratch files and reallocates fresh VSAM datasets."
+      },
+      2: {
+        pos: [-7, 7, 12], target: [-7, 2, 0],
+        name: "STEP02: SUBVAL (Validation Gate)", rc: "RC=0004",
+        speech: "Step 2 is SUBVAL. The validation gate checks customer and plan records. Invalid accounts divert into the red exception silo, while valid records continue forward!"
+      },
+      3: {
+        pos: [0, 7, 12], target: [0, 2, 0],
+        name: "STEP03: BILLPROC (Billing Engine)", rc: "RC=0000",
+        speech: "Step 3 is BILLPROC. Here we compute invoices! Longer subscriptions receive up to a 15% duration discount, followed by an 18% GST calculation."
+      },
+      4: {
+        pos: [7, 7, 12], target: [7, 2, 0],
+        name: "STEP04: PAYPROC (Payment Reconciler)", rc: "RC=0004",
+        speech: "Step 4 is PAYPROC. We reconcile incoming payments with bills. Matched payments pass with a green light. Underpayments or duplicates are diverted to exceptions."
+      },
+      5: {
+        pos: [14, 7, 12], target: [14, 2, 0],
+        name: "STEP05: REVPROC (Revenue Vault)", rc: "RC=0000",
+        speech: "Step 5 is REVPROC. The revenue vault aggregates financial totals, splitting cash received from outstanding receivables."
+      },
+      6: {
+        pos: [20, 7, 12], target: [20, 2, 0],
+        name: "STEP06: REPORT (Spool Printer)", rc: "RC=0000",
+        speech: "Step 6 is REPORT. The spool printer produces formatted billing, revenue, and exception statements."
+      },
+      7: {
+        pos: [3, 14, 30], target: [3, 0, 0],
+        name: "STEP07: CLEANUP (Job Complete)", rc: "RC=0000",
+        speech: "Step 7 is CLEANUP. Temporary work files are purged, and the batch job concludes with normal return code."
+      },
+    };
+
+    function initThree() {
+      const container = document.getElementById('canvas-container');
+      if (!container || renderer) return;
+
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || 500;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xFAF7F2);
+
+      camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
+      camera.position.set(3, 14, 32);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.target.set(3, 0, 0);
+
+      // Warm studio lights
+      scene.add(new THREE.AmbientLight(0xfffaf0, 1.3));
+
+      const keyLight = new THREE.DirectionalLight(0xfff8ee, 1.0);
+      keyLight.position.set(20, 35, 20);
+      keyLight.castShadow = true;
+      scene.add(keyLight);
+
+      const fillLight = new THREE.DirectionalLight(0xf4efe6, 0.6);
+      fillLight.position.set(-20, 20, -10);
+      scene.add(fillLight);
+
+      // Floor
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0xF5F0E6, roughness: 0.9 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -1.5;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const gridHelper = new THREE.GridHelper(80, 40, 0x059669, 0xE8E0D2);
+      gridHelper.position.y = -1.48;
+      scene.add(gridHelper);
+
+      buildFullHardware();
+      buildMovingPackets();
+
+      window.addEventListener('resize', onWindowResize);
+      animate3D();
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('canvas-container');
+      if (!container || !renderer || !camera) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function buildFullHardware() {
+      const ivoryMat = new THREE.MeshStandardMaterial({ color: 0xFDFBF7, roughness: 0.25, metalness: 0.2 });
+      const ivoryTrim = new THREE.MeshStandardMaterial({ color: 0xEAE1D2, roughness: 0.3, metalness: 0.4 });
+      const emeraldMat = new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.2, metalness: 0.6 });
+      const vermilionMat = new THREE.MeshStandardMaterial({ color: 0xE34234, roughness: 0.2, metalness: 0.5 });
+
+      // 1. VSAM Rack with tape reels (-14)
+      const vsam = new THREE.Group();
+      vsam.position.set(-14, 0, 0);
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(3.6, 6.5, 2.8), ivoryMat);
+      rack.position.y = 1.8;
+      rack.castShadow = true;
+      vsam.add(rack);
+
+      for (let i = 0; i < 3; i++) {
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.45, 32), ivoryTrim);
+        cyl.position.set(0, 1.0 + i * 1.3, 0.7);
+        vsam.add(cyl);
+
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.03, 8, 32), new THREE.MeshBasicMaterial({ color: 0x059669 }));
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(0, 1.0 + i * 1.3, 0.7);
+        vsam.add(ring);
+      }
+
+      tapeReel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.1, 32), ivoryTrim);
+      tapeReel1.rotation.x = Math.PI / 2;
+      tapeReel1.position.set(-1.1, 4.4, 1.45);
+      vsam.add(tapeReel1);
+
+      tapeReel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.1, 32), ivoryTrim);
+      tapeReel2.rotation.x = Math.PI / 2;
+      tapeReel2.position.set(1.1, 4.4, 1.45);
+      vsam.add(tapeReel2);
+      scene.add(vsam);
+
+      // 2. SUBVAL Gate (-7)
+      const subval = new THREE.Group();
+      subval.position.set(-7, 0, 0);
+      const postL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 0.9), ivoryTrim);
+      postL.position.set(-1.5, 1.0, 0);
+      subval.add(postL);
+      const postR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 0.9), ivoryTrim);
+      postR.position.set(1.5, 1.0, 0);
+      subval.add(postR);
+      const archTop = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.5, 1), emeraldMat);
+      archTop.position.set(0, 3.7, 0);
+      subval.add(archTop);
+
+      const ringScan = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.05, 16, 32), new THREE.MeshBasicMaterial({ color: 0x059669 }));
+      ringScan.rotation.y = Math.PI / 2;
+      ringScan.position.set(0, 1.5, 0);
+      subval.add(ringScan);
+      scene.add(subval);
+
+      // 3. EXCEPTION Silo & Chute (in Vermilion)
+      const excp = new THREE.Group();
+      excp.position.set(-7, 0, 6.5);
+      const silo = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 3.2, 32), new THREE.MeshPhysicalMaterial({
+        color: 0xFDECEB,
+        emissive: 0xE34234,
+        emissiveIntensity: 0.25,
+        transmission: 0.8,
+        transparent: true
+      }));
+      silo.position.y = 0.5;
+      excp.add(silo);
+
+      const sCap = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 0.35, 32), vermilionMat);
+      sCap.position.y = 2.2;
+      excp.add(sCap);
+
+      const chute = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 6.5, 16), vermilionMat);
+      chute.rotation.x = Math.PI / 2;
+      chute.position.set(0, 0.2, -3.2);
+      excp.add(chute);
+      scene.add(excp);
+
+      // 4. BILLPROC Engine (0)
+      const bill = new THREE.Group();
+      bill.position.set(0, 0, 0);
+      const bBase = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.2, 3), ivoryMat);
+      bBase.position.y = -0.8;
+      bill.add(bBase);
+
+      for (let t = 0; t < 3; t++) {
+        const colH = 1.4 + t * 0.6;
+        const col = new THREE.Mesh(new THREE.BoxGeometry(0.85, colH, 1.6), emeraldMat);
+        col.position.set(-1.0 + t * 1.0, colH / 2 - 0.2, 0);
+        bill.add(col);
+      }
+      scene.add(bill);
+
+      // 5. PAYPROC Reconciler (7)
+      const pay = new THREE.Group();
+      pay.position.set(7, 0, 0);
+      const pBase = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.5, 2.8), ivoryMat);
+      pBase.position.y = -0.6;
+      pay.add(pBase);
+
+      const pillarMats = [emeraldMat, vermilionMat, vermilionMat, vermilionMat];
+      for (let s = 0; s < 4; s++) {
+        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2.5, 16), pillarMats[s]);
+        p.position.set(-1.1 + s * 0.75, 1.0, 0.5);
+        pay.add(p);
+      }
+      scene.add(pay);
+
+      // 6. REVPROC Revenue Vault (14)
+      const rev = new THREE.Group();
+      rev.position.set(14, 0, 0);
+      const vault = new THREE.Mesh(new THREE.BoxGeometry(3.6, 4.8, 2.8), ivoryMat);
+      vault.position.y = 0.9;
+      rev.add(vault);
+
+      const door = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.25, 32), emeraldMat);
+      door.rotation.x = Math.PI / 2;
+      door.position.set(0, 0.9, 1.45);
+      rev.add(door);
+      scene.add(rev);
+
+      // 7. REPORT Spool Printer (20)
+      const prt = new THREE.Group();
+      prt.position.set(20, 0, 0);
+      const prtBody = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.6, 2.4), ivoryMat);
+      prtBody.position.y = -0.2;
+      prt.add(prtBody);
+
+      paperMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.8), new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
+      paperMesh.rotation.x = -Math.PI / 2.5;
+      paperMesh.position.set(0, 1.6, 0.3);
+      prt.add(paperMesh);
+      scene.add(prt);
+    }
+
+    function buildMovingPackets() {
+      const packetGeo = new THREE.BoxGeometry(0.4, 0.22, 0.3);
+      for (let i = 0; i < 32; i++) {
+        const isEx = Math.random() < 0.22;
+        const mat = new THREE.MeshStandardMaterial({
+          color: isEx ? 0xE34234 : 0x059669,
+          roughness: 0.2,
+          metalness: 0.4
+        });
+        const mesh = new THREE.Mesh(packetGeo, mat);
+        scene.add(mesh);
+        movingPackets.push({
+          mesh,
+          progress: Math.random(),
+          speed: 0.0026 + Math.random() * 0.003,
+          isEx
+        });
+      }
+    }
+
+    let clock = new THREE.Clock();
+
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      if (tapeReel1 && tapeReel2) {
+        tapeReel1.rotation.z += delta * 3.5 * simSpeed3D;
+        tapeReel2.rotation.z += delta * 3.5 * simSpeed3D;
+      }
+      if (paperMesh) {
+        paperMesh.position.y = 1.6 + Math.sin(time * 3 * simSpeed3D) * 0.03;
+      }
+
+      movingPackets.forEach(p => {
+        p.progress += p.speed * simSpeed3D;
+        if (p.progress > 1) p.progress = 0;
+
+        if (!p.isEx) {
+          p.mesh.position.x = -14 + p.progress * 35;
+          p.mesh.position.y = -0.5 + Math.sin(p.progress * Math.PI * 6) * 0.1;
+          p.mesh.position.z = Math.sin(p.progress * 8) * 0.2;
+        } else {
+          if (p.progress < 0.25) {
+            const t = p.progress / 0.25;
+            p.mesh.position.x = -14 + t * 7;
+            p.mesh.position.y = -0.5;
+            p.mesh.position.z = 0;
+          } else {
+            const t = (p.progress - 0.25) / 0.75;
+            p.mesh.position.x = -7;
+            p.mesh.position.y = 0.2 - t * 0.8;
+            p.mesh.position.z = t * 6.5;
+          }
+        }
+      });
+
+      if (controls) controls.update();
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    }
+
+    function reset3DCamera() {
+      if (!camera || !controls) return;
+      camera.position.set(3, 14, 32);
+      controls.target.set(3, 0, 0);
+      showToast('info', 'Camera viewpoint reset.');
+    }
+
+    function toggle3DSpeed() {
+      if (simSpeed3D === 1.0) simSpeed3D = 2.0;
+      else if (simSpeed3D === 2.0) simSpeed3D = 0.5;
+      else simSpeed3D = 1.0;
+      document.getElementById('btn-3d-speed').textContent = `${simSpeed3D.toFixed(1)}x Speed`;
+    }
+
+    function seek3DStep(val) {
+      const step = parseInt(val);
+      document.getElementById('step-slider').value = step;
+
+      for (let i = 1; i <= 7; i++) {
+        const lbl = document.getElementById('st-lbl-' + i);
+        if (lbl) {
+          lbl.className = (i === step)
+            ? "cursor-pointer font-bold text-[#059669]"
+            : "cursor-pointer text-[#626E65] hover:text-[#059669]";
+        }
+      }
+
+      const d = stepInfo[step];
+      if (d) {
+        document.getElementById('slider-step-name').textContent = d.name;
+        document.getElementById('slider-rc-name').textContent = d.rc;
+        if (camera && controls) {
+          camera.position.set(...d.pos);
+          controls.target.set(...d.target);
+        }
+        speakAssistant(d.speech, d.name);
+      }
+    }
+
+    function scrubPrev() {
+      let cur = parseInt(document.getElementById('step-slider').value);
+      if (cur > 1) seek3DStep(cur - 1);
+    }
+
+    function scrubNext() {
+      let cur = parseInt(document.getElementById('step-slider').value);
+      if (cur < 7) seek3DStep(cur + 1);
+    }
+
+    function toggleScrubPlay() {
+      isScrubPlaying = !isScrubPlaying;
+      const btn = document.getElementById('scrub-play-btn');
+      if (isScrubPlaying) {
+        btn.innerHTML = `<i data-lucide="pause" class="w-3 h-3 fill-white"></i><span>Pause</span>`;
+        scrubInterval = setInterval(() => {
+          let cur = parseInt(document.getElementById('step-slider').value);
+          let nxt = cur >= 7 ? 1 : cur + 1;
+          seek3DStep(nxt);
+        }, 3200);
+      } else {
+        btn.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-white"></i><span>Play</span>`;
+        clearInterval(scrubInterval);
+      }
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
