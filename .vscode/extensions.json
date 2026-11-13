@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "broadcom.cobol-language-support",
+    "broadcom.jcl-language-support",
+    "tomasdanek.tn3270",
+    "zowe.vscode-extension-for-zowe",
+    "ms-python.python",
+    "ms-python.debugpy",
+    "antfu.vite"
+  ]
+}

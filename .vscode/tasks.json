@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Mainframe: Run Master Batch (SUBBILL01)",
+      "type": "shell",
+      "command": "python scripts/run_batch.py",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "options": {
+        "env": {
+          "PATH": "C:\\msys64\\mingw64\\bin;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mainframe: Recompile All COBOL Programs (cobc)",
+      "type": "shell",
+      "command": "powershell -Command \"$env:PATH='C:\\msys64\\mingw64\\bin;' + $env:PATH; foreach ($f in @('SUBVAL','BILLPROC','PAYPROC','REVPROC','REPORT')) { Write-Host 'Compiling '$f'...'; cobc -x -I copybooks -o bin/$f.exe cobol/$f.cbl }; Write-Host 'All COBOL executables compiled successfully.'\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mainframe: Start FastAPI Backend (Port 8000)",
+      "type": "shell",
+      "command": "python -m uvicorn backend.server:app --host 127.0.0.1 --port 8000 --reload",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Start Vite Dev Server (Port 3000)",
+      "type": "shell",
+      "command": "npm --prefix frontend run dev",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mainframe: Reset Master Datasets (Factory Clean)",
+      "type": "shell",
+      "command": "python scripts/generate_data.py",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Security: Run RACF Automated Test Suite",
+      "type": "shell",
+      "command": "python -c \"from fastapi.testclient import TestClient; from backend.server import app; c = TestClient(app); r = c.post('/api/auth/login', json={'userid':'SYSADMIN','password':'Pass123!ADMIN'}); assert r.status_code==200; print('RACF Auth OK:', r.json()['user']['name'])\"",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "IBM Z Mainframe: FastAPI & RACF Server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backend.server:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000",
+        "--reload"
+      ],
+      "jinja": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "PATH": "C:\\msys64\\mingw64\\bin;${env:PATH}"
+      }
+    },
+    {
+      "name": "IBM Z Mainframe: Run Batch SUBBILL01 (Standalone)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/run_batch.py",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "PATH": "C:\\msys64\\mingw64\\bin;${env:PATH}"
+      }
+    },
+    {
+      "name": "IBM Z Mainframe: Reset Master Datasets",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/generate_data.py",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Mainframe System (Backend + Batch)",
+      "configurations": ["IBM Z Mainframe: FastAPI & RACF Server"]
+    }
+  ]
+}

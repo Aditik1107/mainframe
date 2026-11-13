@@ -1,0 +1,19 @@
+{
+  "files.associations": {
+    "*.cbl": "cobol",
+    "*.cob": "cobol",
+    "*.cpy": "cobol",
+    "*.jcl": "jcl",
+    "*.DAT": "plaintext",
+    "*.TXT": "plaintext"
+  },
+  "editor.tabSize": 4,
+  "editor.rulers": [6, 7, 11, 72, 80],
+  "editor.renderWhitespace": "selection",
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\msys64\\mingw64\\bin;${env:PATH}"
+  },
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}"
+  ]
+}

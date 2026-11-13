@@ -133,6 +133,54 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden bg-[#FAF7F2] text-[#1B241E]">
 
+  <!-- ============================================================ -->
+  <!-- RACF LOGIN MODAL (MAINFRAME LOGON SCREEN)                  -->
+  <!-- ============================================================ -->
+  <div id="racf-login-overlay" class="fixed inset-0 z-[200] bg-[#1B241E]/90 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl shadow-2xl w-full max-w-sm p-8 flex flex-col gap-5">
+      <!-- Header -->
+      <div class="flex flex-col items-center gap-2 pb-4 border-b border-[#E8E0D2]">
+        <div class="w-12 h-12 rounded-xl bg-[#059669] flex items-center justify-center text-white font-mono font-bold text-lg shadow">SB</div>
+        <h2 class="text-sm font-bold font-mono text-[#1B241E]">IBM z/OS RACF LOGON</h2>
+        <p class="text-[11px] text-[#626E65] font-mono text-center">SmartBill — SYS-ZOS1 • MVS JES2<br>Authorized Access Only. All sessions are audited.</p>
+      </div>
+
+      <!-- Error Banner -->
+      <div id="login-error" class="hidden px-3 py-2 bg-[#FDECEB] border border-[#FCA5A5] rounded-xl text-xs font-mono text-[#E34234]"></div>
+
+      <!-- USERID -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[11px] font-mono font-bold text-[#626E65] uppercase">RACF User ID</label>
+        <input id="login-userid" type="text" autocomplete="username" placeholder="e.g. SYSADMIN"
+          class="px-3.5 py-2 text-xs font-mono bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669] uppercase placeholder:normal-case placeholder:text-[#626E65]"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[11px] font-mono font-bold text-[#626E65] uppercase">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="Enter password"
+          class="px-3.5 py-2 text-xs font-mono bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+
+      <!-- Demo Users hint -->
+      <div class="bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl p-3 text-[11px] font-mono text-[#626E65] flex flex-col gap-1">
+        <span class="text-[#1B241E] font-bold text-[11px]">Demo RACF Accounts:</span>
+        <span>🔑 <b>SYSADMIN</b> / Pass123!ADMIN — Full SysProg</span>
+        <span>📊 <b>BILLMGR</b> / Pass123!BILL — Finance</span>
+        <span>✏️ <b>DATAOPR</b> / Pass123!DATA — Operator</span>
+        <span>👁️ <b>AUDITOR</b> / Pass123!AUDIT — Read-Only</span>
+      </div>
+
+      <!-- Login Button -->
+      <button onclick="doLogin()" id="btn-login" class="px-5 py-2.5 text-sm font-bold font-mono bg-[#059669] hover:bg-[#047857] text-white rounded-xl shadow transition-all flex items-center justify-center gap-2">
+        <i data-lucide="log-in" class="w-4 h-4"></i>
+        RACF LOGON
+      </button>
+    </div>
+  </div>
+
   <!-- TOAST ALERTS CONTAINER -->
   <div id="toast-container" class="fixed top-16 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
@@ -241,6 +289,14 @@
 
     <!-- Header Quick Actions -->
     <div class="flex items-center gap-2">
+      <!-- Session badge -->
+      <div id="user-badge" class="hidden items-center gap-2 px-3 py-1.5 bg-[#E6F4EA] border border-[#A7F3D0] rounded-lg text-xs font-mono">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#059669]"></i>
+        <span id="user-badge-text" class="text-[#059669] font-bold"></span>
+        <button onclick="doLogout()" class="ml-1 text-[#626E65] hover:text-[#E34234]" title="RACF Logoff">
+          <i data-lucide="log-out" class="w-3 h-3"></i>
+        </button>
+      </div>
       <button onclick="resetToFactoryState()" title="Reset data to factory state" class="px-3 py-1.5 text-xs font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] text-[#1B241E] border border-[#E8E0D2] rounded-lg transition-colors flex items-center gap-1.5">
         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-[#626E65]"></i>
         <span>Reset Data</span>
@@ -704,6 +760,110 @@
     let isTourRunning = false;
 
     // -------------------------------------------------------------------------
+    // RACF SESSION MANAGEMENT
+    // -------------------------------------------------------------------------
+    let racfToken = sessionStorage.getItem('racf_token') || null;
+    let racfUser  = JSON.parse(sessionStorage.getItem('racf_user') || 'null');
+
+    function authHeaders() {
+      return racfToken ? { 'Authorization': 'Bearer ' + racfToken, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+
+    function showLoginOverlay() {
+      document.getElementById('racf-login-overlay').style.display = 'flex';
+    }
+    function hideLoginOverlay() {
+      document.getElementById('racf-login-overlay').style.display = 'none';
+    }
+
+    function updateUserBadge() {
+      const badge = document.getElementById('user-badge');
+      const badgeTxt = document.getElementById('user-badge-text');
+      if (racfUser) {
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        badgeTxt.textContent = racfUser.userid + ' (' + racfUser.role + ')';
+      } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+      }
+      lucide.createIcons();
+    }
+
+    async function doLogin() {
+      const btn = document.getElementById('btn-login');
+      const errEl = document.getElementById('login-error');
+      const uid = document.getElementById('login-userid').value.trim();
+      const pwd = document.getElementById('login-password').value;
+      errEl.classList.add('hidden');
+
+      if (!uid || !pwd) { errEl.textContent = 'USER ID and PASSWORD required.'; errEl.classList.remove('hidden'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="animate-spin inline-block">●</span> Authenticating...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userid: uid.toUpperCase(), password: pwd })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.detail || 'Authentication failed.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        racfToken = data.token;
+        racfUser  = data.user;
+        sessionStorage.setItem('racf_token', racfToken);
+        sessionStorage.setItem('racf_user', JSON.stringify(racfUser));
+        hideLoginOverlay();
+        updateUserBadge();
+        await fetchDatasets();
+        await fetchReports();
+        showToast('success', 'RACF LOGON: Welcome, ' + racfUser.name.split(' / ')[0] + '!');
+        speakAssistant('Welcome ' + racfUser.name.split(' / ')[0] + '! You are logged in as ' + racfUser.role + '. Your session is secured and audited by the RACF subsystem.', 'RACF Session Active');
+      } catch(e) {
+        errEl.textContent = 'Connection error: ' + e.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i> RACF LOGON';
+        lucide.createIcons();
+      }
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+      } catch(e) {}
+      racfToken = null;
+      racfUser = null;
+      sessionStorage.removeItem('racf_token');
+      sessionStorage.removeItem('racf_user');
+      updateUserBadge();
+      showLoginOverlay();
+      showToast('success', 'RACF Session terminated. Goodbye.');
+    }
+
+    async function apiFetch(url, options = {}) {
+      options.headers = Object.assign({}, authHeaders(), options.headers || {});
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        showToast('error', 'Session expired. Please login again.');
+        doLogout();
+        throw new Error('Session expired');
+      }
+      if (res.status === 403) {
+        const err = await res.json().catch(() => ({}));
+        showToast('error', 'Access Denied: ' + (err.detail || 'Insufficient RACF authority.').substring(0, 80));
+        throw new Error('RACF 403');
+      }
+      return res;
+    }
+
+    // -------------------------------------------------------------------------
     // AI VOICE OVER ASSISTANT ENGINE (SpeechSynthesis)
     // -------------------------------------------------------------------------
     function speakAssistant(text, title = "SmartBill Guide") {
@@ -896,8 +1056,6 @@
     // -------------------------------------------------------------------------
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      fetchDatasets();
-      fetchReports();
       calculateBill();
 
       if ('speechSynthesis' in window) {
@@ -907,17 +1065,34 @@
         };
       }
 
-      setTimeout(() => {
-        speakAssistant(
-          "Welcome to SmartBill! I am your AI assistant. Hit 'Run Billing Cycle Now' to start batch processing, or click 'Guided Tour' for a complete walkthrough.",
-          "Welcome to SmartBill"
-        );
-      }, 900);
+      // RACF Session check
+      if (racfToken && racfUser) {
+        // Restore existing session
+        hideLoginOverlay();
+        updateUserBadge();
+        fetchDatasets();
+        fetchReports();
+        setTimeout(() => {
+          speakAssistant(
+            "Welcome back, " + racfUser.name.split(' / ')[0] + "! Your RACF session is active. All actions are audited.",
+            "Session Restored"
+          );
+        }, 600);
+      } else {
+        // Show login screen
+        showLoginOverlay();
+        setTimeout(() => {
+          speakAssistant(
+            "Welcome to SmartBill — IBM z/OS Mainframe Automated Billing System. Please enter your RACF credentials to begin your secure session.",
+            "RACF Logon Required"
+          );
+        }, 600);
+      }
     });
 
     async function fetchDatasets() {
       try {
-        const resp = await fetch('/api/datasets');
+        const resp = await apiFetch('/api/datasets');
         datasetData = await resp.json();
         updateDashboardView();
         renderRecordsTable();
@@ -928,7 +1103,7 @@
 
     async function fetchReports() {
       try {
-        const resp = await fetch('/api/reports');
+        const resp = await apiFetch('/api/reports');
         reportsData = await resp.json();
         loadReport(currentReport);
       } catch (err) {
@@ -950,7 +1125,7 @@
       );
 
       try {
-        const resp = await fetch('/api/batch/run', { method: 'POST' });
+        const resp = await apiFetch('/api/batch/run', { method: 'POST' });
         const data = await resp.json();
 
         confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -1046,7 +1221,7 @@
     async function quickFix(key, code) {
       speakAssistant(`Repairing record ${key}. Setting to valid status and rerunning the cycle.`, "Auto-Fix");
       try {
-        const resp = await fetch('/api/datasets/fix-exception', {
+        const resp = await apiFetch('/api/datasets/fix-exception', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ record_key: key, err_code: code })
@@ -1073,7 +1248,7 @@
       speakAssistant(descriptions[name] || `Injecting scenario ${name}...`, "Scenario Test");
 
       try {
-        const resp = await fetch('/api/datasets/inject', {
+        const resp = await apiFetch('/api/datasets/inject', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scenario: name })
@@ -1252,7 +1427,7 @@
     async function deleteRecord(dsName, id) {
       if (!confirm(`Delete record ${id}?`)) return;
       try {
-        const resp = await fetch(`/api/datasets/${dsName}/${id}`, { method: 'DELETE' });
+        const resp = await apiFetch(`/api/datasets/${dsName}/${id}`, { method: 'DELETE' });
         const data = await resp.json();
         showToast('info', data.message);
         await fetchDatasets();
@@ -1337,7 +1512,7 @@
           payload = { txn_id: v1, sub_id: v2, amount: parseFloat(v3 || '0'), mode: 'UPI', status: 'SUCCESS' };
         }
 
-        const resp = await fetch(endpoint, {
+        const resp = await apiFetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1354,7 +1529,7 @@
     async function resetToFactoryState() {
       if (!confirm("Reset all datasets to factory state?")) return;
       try {
-        const resp = await fetch('/api/datasets/reset', { method: 'POST' });
+        const resp = await apiFetch('/api/datasets/reset', { method: 'POST' });
         const data = await resp.json();
         showToast('info', data.message);
         speakAssistant("All datasets have been restored to clean factory state.", "Factory Reset");
