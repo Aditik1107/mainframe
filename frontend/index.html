@@ -164,20 +164,40 @@
           onkeydown="if(event.key==='Enter')doLogin()">
       </div>
 
-      <!-- Demo Users hint -->
-      <div class="bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl p-3 text-[11px] font-mono text-[#626E65] flex flex-col gap-1">
-        <span class="text-[#1B241E] font-bold text-[11px]">Demo RACF Accounts:</span>
-        <span>🔑 <b>SYSADMIN</b> / Pass123!ADMIN — Full SysProg</span>
-        <span>📊 <b>BILLMGR</b> / Pass123!BILL — Finance</span>
-        <span>✏️ <b>DATAOPR</b> / Pass123!DATA — Operator</span>
-        <span>👁️ <b>AUDITOR</b> / Pass123!AUDIT — Read-Only</span>
+      <!-- Demo Users hint with quick-fill -->
+      <div class="bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl p-3 text-[11px] font-mono text-[#626E65] flex flex-col gap-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[#1B241E] font-bold text-[11px]">Demo RACF Accounts:</span>
+          <span class="text-[10px] text-[#059669] font-bold">1-Click Auto-fill</span>
+        </div>
+        <button type="button" onclick="quickFillLogin('SYSADMIN','Pass123!ADMIN')" class="text-left px-2 py-1 rounded bg-[#FAF7F2] hover:bg-[#E6F4EA] border border-[#E8E0D2] hover:border-[#A7F3D0] transition-colors flex items-center justify-between">
+          <span>🔑 <b class="text-[#1B241E]">SYSADMIN</b> / Pass123!ADMIN</span>
+          <span class="text-[10px] text-[#059669] font-bold">Full SysProg</span>
+        </button>
+        <button type="button" onclick="quickFillLogin('BILLMGR','Pass123!BILL')" class="text-left px-2 py-1 rounded bg-[#FAF7F2] hover:bg-[#E6F4EA] border border-[#E8E0D2] hover:border-[#A7F3D0] transition-colors flex items-center justify-between">
+          <span>📊 <b class="text-[#1B241E]">BILLMGR</b> / Pass123!BILL</span>
+          <span class="text-[10px] text-[#059669] font-bold">Finance Lead</span>
+        </button>
+        <button type="button" onclick="quickFillLogin('DATAOPR','Pass123!DATA')" class="text-left px-2 py-1 rounded bg-[#FAF7F2] hover:bg-[#E6F4EA] border border-[#E8E0D2] hover:border-[#A7F3D0] transition-colors flex items-center justify-between">
+          <span>✏️ <b class="text-[#1B241E]">DATAOPR</b> / Pass123!DATA</span>
+          <span class="text-[10px] text-[#059669] font-bold">Operator</span>
+        </button>
+        <button type="button" onclick="quickFillLogin('AUDITOR','Pass123!AUDIT')" class="text-left px-2 py-1 rounded bg-[#FAF7F2] hover:bg-[#E6F4EA] border border-[#E8E0D2] hover:border-[#A7F3D0] transition-colors flex items-center justify-between">
+          <span>👁️ <b class="text-[#1B241E]">AUDITOR</b> / Pass123!AUDIT</span>
+          <span class="text-[10px] text-[#E34234] font-bold">Read-Only</span>
+        </button>
       </div>
 
-      <!-- Login Button -->
-      <button onclick="doLogin()" id="btn-login" class="px-5 py-2.5 text-sm font-bold font-mono bg-[#059669] hover:bg-[#047857] text-white rounded-xl shadow transition-all flex items-center justify-center gap-2">
-        <i data-lucide="log-in" class="w-4 h-4"></i>
-        RACF LOGON
-      </button>
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="if(racfUser){hideLoginOverlay()}else{showToast('warning','Please logon to access the system.')}" id="btn-login-cancel" class="px-4 py-2.5 text-sm font-mono bg-[#FAF7F2] hover:bg-[#F4EFE6] text-[#626E65] border border-[#E8E0D2] rounded-xl transition-all">
+          Cancel
+        </button>
+        <button onclick="doLogin()" id="btn-login" class="flex-1 px-5 py-2.5 text-sm font-bold font-mono bg-[#059669] hover:bg-[#047857] text-white rounded-xl shadow transition-all flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          RACF LOGON
+        </button>
+      </div>
     </div>
   </div>
 
@@ -263,7 +283,7 @@
       </div>
     </div>
 
-    <!-- 5 Clean Navigation Tabs -->
+    <!-- 6 Clean Navigation Tabs -->
     <nav class="flex items-center gap-1 bg-[#F4EFE6] p-1 rounded-xl border border-[#E8E0D2]">
       <button onclick="switchTab('cycle')" id="tab-btn-cycle" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5">
         <i data-lucide="play-circle" class="w-4 h-4"></i>
@@ -285,15 +305,19 @@
         <i data-lucide="box" class="w-4 h-4"></i>
         <span>3D Model</span>
       </button>
+      <button onclick="switchTab('apidocs')" id="tab-btn-apidocs" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+        <i data-lucide="book-open" class="w-4 h-4"></i>
+        <span>API Docs</span>
+      </button>
     </nav>
 
     <!-- Header Quick Actions -->
     <div class="flex items-center gap-2">
       <!-- Session badge -->
-      <div id="user-badge" class="hidden items-center gap-2 px-3 py-1.5 bg-[#E6F4EA] border border-[#A7F3D0] rounded-lg text-xs font-mono">
+      <div id="user-badge" class="hidden items-center gap-2 px-3 py-1.5 bg-[#E6F4EA] border border-[#A7F3D0] rounded-lg text-xs font-mono cursor-pointer hover:bg-[#d1fae5] transition-colors" title="Active RACF Session - Click to Switch User" onclick="showLoginOverlay()">
         <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#059669]"></i>
         <span id="user-badge-text" class="text-[#059669] font-bold"></span>
-        <button onclick="doLogout()" class="ml-1 text-[#626E65] hover:text-[#E34234]" title="RACF Logoff">
+        <button onclick="event.stopPropagation(); doLogout()" class="ml-1 text-[#626E65] hover:text-[#E34234]" title="RACF Logoff">
           <i data-lucide="log-out" class="w-3 h-3"></i>
         </button>
       </div>
@@ -722,6 +746,100 @@
 
     </section>
 
+    <!-- --------------------------------------------------------------------- -->
+    <!-- TAB 6: API DOCUMENTATION & LIVE SWAGGER CONSOLE                       -->
+    <!-- --------------------------------------------------------------------- -->
+    <section id="tab-content-apidocs" class="tab-pane flex-1 p-6 overflow-y-auto flex-col gap-5">
+      
+      <!-- API Header Card -->
+      <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-[#1B241E]">IBM z/Architecture REST API &amp; Swagger Documentation</h2>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0]">OpenAPI 3.0</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F4EFE6] text-[#626E65] border border-[#E8E0D2]">FastAPI 0.115</span>
+          </div>
+          <p class="text-xs text-[#626E65] mt-0.5">Explore, inspect, and test all 29 mainframe batch endpoints, RACF security guards, and SMF80 audit services live in this UI.</p>
+        </div>
+
+        <!-- View Controls & External Links -->
+        <div class="flex items-center gap-2">
+          <div class="bg-[#F4EFE6] p-1 rounded-xl border border-[#E8E0D2] flex items-center gap-1 text-xs font-mono">
+            <button onclick="switchApiDocView('explorer')" id="api-btn-explorer" class="px-3 py-1.5 rounded-lg font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5">
+              <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+              <span>Interactive Explorer</span>
+            </button>
+            <button onclick="switchApiDocView('swagger')" id="api-btn-swagger" class="px-3 py-1.5 rounded-lg font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Embedded Swagger UI</span>
+            </button>
+          </div>
+
+          <a href="/docs" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-xs font-mono font-bold bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl flex items-center gap-1.5 text-[#1B241E] shadow-xs" title="Open Swagger UI in New Tab">
+            <span>/docs</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#626E65]"></i>
+          </a>
+          <a href="/redoc" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-xs font-mono font-bold bg-[#FAF7F2] hover:bg-[#F4EFE6] border border-[#E8E0D2] rounded-xl flex items-center gap-1.5 text-[#1B241E] shadow-xs" title="Open ReDoc in New Tab">
+            <span>/redoc</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#626E65]"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- VIEW 1: NATIVE INTERACTIVE API EXPLORER -->
+      <div id="api-view-native" class="flex flex-col gap-4">
+        
+        <!-- Filter Pills & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+            <button onclick="filterApiCategory('all')" id="api-pill-all" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#A7F3D0] bg-[#E6F4EA] font-bold text-[#059669]">
+              All (29)
+            </button>
+            <button onclick="filterApiCategory('auth')" id="api-pill-auth" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              🔐 RACF Auth (4)
+            </button>
+            <button onclick="filterApiCategory('batch')" id="api-pill-batch" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              ⚙️ Batch &amp; JCL (2)
+            </button>
+            <button onclick="filterApiCategory('datasets')" id="api-pill-datasets" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              💾 Datasets &amp; VSAM (12)
+            </button>
+            <button onclick="filterApiCategory('security')" id="api-pill-security" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              🛡️ SMF80 Audit (3)
+            </button>
+            <button onclick="filterApiCategory('reports')" id="api-pill-reports" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              📊 Reports &amp; Spool (4)
+            </button>
+            <button onclick="filterApiCategory('system')" id="api-pill-system" class="api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]">
+              🏛️ System &amp; Patent (2)
+            </button>
+          </div>
+
+          <!-- Live Endpoint Search -->
+          <div class="relative w-72">
+            <input type="text" id="api-search-input" oninput="onApiSearch(this.value)" placeholder="Search endpoint path, method, or keyword..." 
+              class="w-full px-3.5 py-1.5 pl-9 text-xs font-mono bg-[#FAF7F2] border border-[#E8E0D2] rounded-xl focus:outline-none focus:border-[#059669]">
+            <i data-lucide="search" class="w-4 h-4 text-[#626E65] absolute left-2.5 top-2"></i>
+          </div>
+        </div>
+
+        <!-- Endpoints Grid -->
+        <div id="api-endpoints-container" class="grid grid-cols-1 gap-3.5"></div>
+      </div>
+
+      <!-- VIEW 2: EMBEDDED SWAGGER UI IFRAME -->
+      <div id="api-view-swagger" class="hidden flex-col gap-2">
+        <div class="flex items-center justify-between text-xs font-mono px-1 text-[#626E65]">
+          <span>FastAPI Live OpenAPI Specification UI (Directly mounted at <code>/docs</code>)</span>
+          <button onclick="document.getElementById('swagger-frame').src = '/docs'" class="hover:text-[#059669] flex items-center gap-1">
+            <i data-lucide="rotate-cw" class="w-3 h-3"></i> Reload Frame
+          </button>
+        </div>
+        <iframe src="/docs" id="swagger-frame" class="w-full h-[calc(100vh-210px)] rounded-2xl border border-[#E8E0D2] bg-white shadow-xs"></iframe>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- ========================================================================= -->
@@ -1048,6 +1166,10 @@
         speakAssistant("Welcome to the 3D Mainframe simulation. Watch green valid records flow through while red exceptions divert to the silo. Use the timeline slider below to inspect each step!", "3D Hardware Model");
         if (!renderer) initThree();
         onWindowResize();
+      } else if (tabId === 'apidocs') {
+        speakAssistant("This is the interactive API Documentation and Swagger console. You can inspect all 29 REST endpoints, RACF security permissions, and execute live calls directly from this UI.", "API Documentation");
+        renderApiExplorer();
+        lucide.createIcons();
       }
     }
 
@@ -1950,6 +2072,266 @@
         clearInterval(scrubInterval);
       }
       lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // RACF QUICK LOGIN HELPER
+    // -------------------------------------------------------------------------
+    function quickFillLogin(uid, pwd) {
+      document.getElementById('login-userid').value = uid;
+      document.getElementById('login-password').value = pwd;
+      document.getElementById('login-error').classList.add('hidden');
+      doLogin();
+    }
+
+    // -------------------------------------------------------------------------
+    // INTERACTIVE API DOCUMENTATION & LIVE SWAGGER EXPLORER
+    // -------------------------------------------------------------------------
+    let activeApiCategory = 'all';
+    let apiSearchQuery = '';
+
+    const API_ENDPOINTS = [
+      // 1. RACF Security
+      { id: 'auth-login', group: 'auth', method: 'POST', path: '/api/auth/login', desc: 'Authenticate RACF User & issue signed HMAC-SHA256 bearer session token.', role: 'PUBLIC', body: '{\n  "userid": "SYSADMIN",\n  "password": "Pass123!ADMIN"\n}' },
+      { id: 'auth-me', group: 'auth', method: 'GET', path: '/api/auth/me', desc: 'Retrieve currently authenticated RACF user profile, group (SYS1/FINGRP/etc.), and permissions.', role: 'AUTH_USER', body: null },
+      { id: 'auth-users', group: 'auth', method: 'GET', path: '/api/auth/users', desc: 'Query directory of demo RACF user accounts and their authority tiers.', role: 'PUBLIC', body: null },
+      { id: 'auth-logout', group: 'auth', method: 'POST', path: '/api/auth/logout', desc: 'Revoke active RACF session token and write SMF Type 80 LOGOFF audit record.', role: 'AUTH_USER', body: '{}' },
+
+      // 2. Batch Execution & JCL
+      { id: 'batch-run', group: 'batch', method: 'POST', path: '/api/batch/run', desc: 'Execute full JCL Job SUBBILL01: STEP01 (IDCAMS) through STEP07 (SPOOL).', role: 'SYSADMIN [SYS1]', body: '{}' },
+      { id: 'batch-step2', group: 'batch', method: 'POST', path: '/api/batch/step/STEP02', desc: 'Trigger STEP02: SUBVAL COBOL validation gate program.', role: 'SYSADMIN [SYS1]', body: '{}' },
+      { id: 'batch-step3', group: 'batch', method: 'POST', path: '/api/batch/step/STEP03', desc: 'Trigger STEP03: BILLPROC COBOL duration discount & GST billing engine.', role: 'SYSADMIN [SYS1]', body: '{}' },
+      { id: 'batch-step4', group: 'batch', method: 'POST', path: '/api/batch/step/STEP04', desc: 'Trigger STEP04: PAYPROC COBOL payment reconciliation engine.', role: 'SYSADMIN [SYS1]', body: '{}' },
+
+      // 3. Datasets & VSAM
+      { id: 'ds-all', group: 'datasets', method: 'GET', path: '/api/datasets', desc: 'Read all 8 master datasets & transaction registers (CUSTMAST, SUBMAST, etc.).', role: 'PUBLIC / READ', body: null },
+      { id: 'ds-cust-add', group: 'datasets', method: 'POST', path: '/api/datasets/customer', desc: 'Insert new customer record into VSAM KSDS dataset CUSTMAST.DAT.', role: 'SYSADMIN, DATAOPR', body: '{\n  "cust_id": "CUST000999",\n  "name": "Acme Global Industries",\n  "email": "ops@acmeglobal.com",\n  "phone": "+91-98765-43210",\n  "status": "A",\n  "reg_date": "2026-10-01"\n}' },
+      { id: 'ds-sub-add', group: 'datasets', method: 'POST', path: '/api/datasets/subscription', desc: 'Insert subscription record into SUBMAST.DAT with duration & bill date.', role: 'SYSADMIN, DATAOPR', body: '{\n  "sub_id": "SUB9990001",\n  "cust_id": "CUST000101",\n  "plan_id": "PLAN-001",\n  "duration_months": 12,\n  "status": "A",\n  "next_bill_date": "2026-10-01"\n}' },
+      { id: 'ds-pay-add', group: 'datasets', method: 'POST', path: '/api/datasets/payment', desc: 'Insert transaction payment into sequential PAYMENT.DAT.', role: 'SYSADMIN, DATAOPR', body: '{\n  "txn_id": "TXN9990001",\n  "sub_id": "SUB1000001",\n  "amount": 1060.94,\n  "mode": "UPI",\n  "status": "SUCCESS"\n}' },
+      { id: 'ds-inject', group: 'datasets', method: 'POST', path: '/api/datasets/inject', desc: 'Inject test anomaly scenario (MIXED_ERRORS, INACTIVE_CUST, AMOUNT_MISMATCH, DUPLICATE_PAY).', role: 'SYSADMIN [SYS1]', body: '{\n  "scenario": "MIXED_ERRORS"\n}' },
+      { id: 'ds-fix', group: 'datasets', method: 'POST', path: '/api/datasets/fix-exception', desc: 'Remediate defect record in exception silo and clear warning code.', role: 'SYSADMIN, DATAOPR', body: '{\n  "record_key": "CUST999099",\n  "err_code": "ERR-CUST-INACTIVE"\n}' },
+      { id: 'ds-reset', group: 'datasets', method: 'POST', path: '/api/datasets/reset', desc: 'IDCAMS Purge: Restore all master files to factory clean state.', role: 'SYSADMIN [SYS1]', body: '{}' },
+
+      // 4. Security & SMF80 Audit
+      { id: 'sec-stats', group: 'security', method: 'GET', path: '/api/security/stats', desc: 'Summary of active RACF sessions, failed attempts, lockouts & SMF80 event count.', role: 'PUBLIC', body: null },
+      { id: 'sec-audit', group: 'security', method: 'GET', path: '/api/security/audit-log', desc: 'Fetch recent SMF Type 80 immutable security audit records (requires authenticated session).', role: 'AUTH_USER', body: null },
+      { id: 'sec-unlock', group: 'security', method: 'POST', path: '/api/security/unlock', desc: 'Operator command: Reinstate locked RACF account after brute force attempts.', role: 'SYSADMIN [SYS1]', body: '{\n  "userid": "AUDITOR"\n}' },
+
+      // 5. Reports & Spool
+      { id: 'rep-all', group: 'reports', method: 'GET', path: '/api/reports', desc: 'Read spooled management print registers (BILLRPT.TXT, REVRPT.TXT, EXCPRPT.TXT).', role: 'PUBLIC / READ', body: null },
+      { id: 'rep-source', group: 'reports', method: 'GET', path: '/api/source/list', desc: 'Query directory catalog of all COBOL programs, JCL scripts, and Copybooks.', role: 'PUBLIC', body: null },
+
+      // 6. System & Patent Metadata
+      { id: 'sys-status', group: 'system', method: 'GET', path: '/api/status', desc: 'Query IBM z16 host, z/OS V2R5 release, GnuCOBOL compiler & active JES2 initiator.', role: 'PUBLIC', body: null },
+      { id: 'sys-patent', group: 'system', method: 'GET', path: '/api/patent', desc: 'Complete patent specification details, applicants (VIT/VU Pune) & figures 1-4.', role: 'PUBLIC', body: null }
+    ];
+
+    function switchApiDocView(view) {
+      const nativeView = document.getElementById('api-view-native');
+      const swaggerView = document.getElementById('api-view-swagger');
+      const btnNative = document.getElementById('api-btn-explorer');
+      const btnSwagger = document.getElementById('api-btn-swagger');
+
+      if (view === 'explorer') {
+        nativeView.classList.remove('hidden');
+        nativeView.classList.add('flex');
+        swaggerView.classList.add('hidden');
+        swaggerView.classList.remove('flex');
+        btnNative.className = "px-3 py-1.5 rounded-lg font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5";
+        btnSwagger.className = "px-3 py-1.5 rounded-lg font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5";
+      } else {
+        nativeView.classList.add('hidden');
+        nativeView.classList.remove('flex');
+        swaggerView.classList.remove('hidden');
+        swaggerView.classList.add('flex');
+        btnSwagger.className = "px-3 py-1.5 rounded-lg font-bold bg-[#FAF7F2] text-[#059669] shadow-xs border border-[#E8E0D2] flex items-center gap-1.5";
+        btnNative.className = "px-3 py-1.5 rounded-lg font-medium text-[#626E65] hover:text-[#1B241E] flex items-center gap-1.5";
+      }
+      lucide.createIcons();
+    }
+
+    function filterApiCategory(cat) {
+      activeApiCategory = cat;
+      document.querySelectorAll('.api-cat-pill').forEach(b => {
+        b.className = "api-cat-pill px-3 py-1.5 rounded-xl border border-[#E8E0D2] bg-[#FAF7F2] text-[#626E65] hover:bg-[#F4EFE6]";
+      });
+      const activeBtn = document.getElementById('api-pill-' + cat);
+      if (activeBtn) {
+        activeBtn.className = "api-cat-pill px-3 py-1.5 rounded-xl border border-[#A7F3D0] bg-[#E6F4EA] font-bold text-[#059669]";
+      }
+      renderApiExplorer();
+    }
+
+    function onApiSearch(val) {
+      apiSearchQuery = val.trim().toLowerCase();
+      renderApiExplorer();
+    }
+
+    function renderApiExplorer() {
+      const container = document.getElementById('api-endpoints-container');
+      if (!container) return;
+
+      const filtered = API_ENDPOINTS.filter(ep => {
+        const matchesCat = activeApiCategory === 'all' || ep.group === activeApiCategory;
+        const matchesSearch = !apiSearchQuery || 
+          ep.path.toLowerCase().includes(apiSearchQuery) || 
+          ep.desc.toLowerCase().includes(apiSearchQuery) || 
+          ep.method.toLowerCase().includes(apiSearchQuery) ||
+          ep.role.toLowerCase().includes(apiSearchQuery);
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-8 text-center text-xs font-mono text-[#626E65]">
+            No API endpoints match the selected filter or search keyword.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ep => {
+        const methodColor = ep.method === 'GET'
+          ? 'bg-[#E6F4EA] text-[#059669] border-[#A7F3D0]'
+          : ep.method === 'POST'
+          ? 'bg-blue-50 text-blue-700 border-blue-200'
+          : ep.method === 'PUT'
+          ? 'bg-amber-50 text-amber-700 border-amber-200'
+          : 'bg-[#FDECEB] text-[#E34234] border-[#FCA5A5]';
+
+        const roleColor = ep.role.includes('SYSADMIN')
+          ? 'bg-[#FDECEB] text-[#E34234] border-[#FCA5A5]'
+          : ep.role.includes('DATAOPR')
+          ? 'bg-amber-50 text-amber-700 border-amber-200'
+          : ep.role === 'PUBLIC'
+          ? 'bg-gray-100 text-gray-700 border-gray-200'
+          : 'bg-[#E6F4EA] text-[#059669] border-[#A7F3D0]';
+
+        return `
+          <div class="bg-[#FAF7F2] border border-[#E8E0D2] rounded-2xl p-4 shadow-xs flex flex-col gap-3 transition-all hover:border-[#059669]/40">
+            <!-- Top line -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-lg border font-bold text-[11px] ${methodColor}">${ep.method}</span>
+                <span class="font-bold text-[#1B241E] text-xs">${ep.path}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] border font-bold ${roleColor}">RACF: ${ep.role}</span>
+                <button onclick="toggleApiBody('${ep.id}')" class="text-[11px] text-[#626E65] hover:text-[#1B241E] underline">
+                  ${ep.body ? 'Payload' : 'Headers'}
+                </button>
+                <button onclick="executeApiTest('${ep.id}')" id="btn-run-${ep.id}" class="px-3 py-1 bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs">
+                  <i data-lucide="play" class="w-3 h-3 fill-white"></i>
+                  <span>Send Call</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="text-xs text-[#626E65] leading-relaxed">${ep.desc}</p>
+
+            <!-- Editable Payload Box (if POST/PUT) -->
+            ${ep.body ? `
+              <div id="body-box-${ep.id}" class="hidden flex-col gap-1 text-xs font-mono pt-1 border-t border-[#E8E0D2]/70">
+                <span class="text-[10px] uppercase font-bold text-[#626E65]">Request Body (JSON):</span>
+                <textarea id="inp-body-${ep.id}" class="w-full bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl p-2.5 text-xs font-mono focus:outline-none focus:border-[#059669] h-24">${ep.body}</textarea>
+              </div>
+            ` : ''}
+
+            <!-- Response Window -->
+            <div id="resp-box-${ep.id}" class="hidden flex-col gap-1 text-xs font-mono pt-2 border-t border-[#E8E0D2]">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span id="resp-status-${ep.id}" class="px-2 py-0.5 rounded text-[10px] font-bold"></span>
+                  <span id="resp-time-${ep.id}" class="text-[10px] text-[#626E65]"></span>
+                </div>
+                <button onclick="document.getElementById('resp-box-${ep.id}').classList.add('hidden')" class="text-[10px] text-[#626E65] hover:text-[#1B241E]">
+                  Dismiss
+                </button>
+              </div>
+              <pre id="resp-content-${ep.id}" class="p-3 bg-[#FDFCF9] border border-[#E8E0D2] rounded-xl text-[11px] font-mono text-[#1B241E] max-h-48 overflow-y-auto whitespace-pre-wrap"></pre>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function toggleApiBody(id) {
+      const box = document.getElementById('body-box-' + id);
+      if (box) box.classList.toggle('hidden');
+    }
+
+    async function executeApiTest(id) {
+      const ep = API_ENDPOINTS.find(x => x.id === id);
+      if (!ep) return;
+
+      const btn = document.getElementById('btn-run-' + id);
+      const respBox = document.getElementById('resp-box-' + id);
+      const statusEl = document.getElementById('resp-status-' + id);
+      const timeEl = document.getElementById('resp-time-' + id);
+      const contentEl = document.getElementById('resp-content-' + id);
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin inline-block text-[10px]">●</span> Calling...`;
+
+      let bodyData = null;
+      if (ep.method !== 'GET') {
+        const inpEl = document.getElementById('inp-body-' + id);
+        if (inpEl) {
+          try {
+            bodyData = JSON.stringify(JSON.parse(inpEl.value));
+          } catch(e) {
+            bodyData = ep.body;
+          }
+        } else if (ep.body) {
+          bodyData = ep.body;
+        }
+      }
+
+      const startTime = performance.now();
+      try {
+        const headers = Object.assign({}, authHeaders());
+        const options = { method: ep.method, headers };
+        if (bodyData && ep.method !== 'GET') options.body = bodyData;
+
+        const res = await fetch(ep.path, options);
+        const duration = Math.round(performance.now() - startTime);
+
+        let data;
+        const text = await res.text();
+        try { data = JSON.parse(text); } catch(e) { data = text; }
+
+        respBox.classList.remove('hidden');
+        timeEl.textContent = `${duration}ms`;
+
+        if (res.ok) {
+          statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-[#E6F4EA] text-[#059669] border border-[#A7F3D0]";
+          statusEl.textContent = `${res.status} OK`;
+        } else if (res.status === 403) {
+          statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5]";
+          statusEl.textContent = `403 FORBIDDEN (RACF VIOLATION)`;
+        } else if (res.status === 401) {
+          statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5]";
+          statusEl.textContent = `401 UNAUTHORIZED`;
+        } else {
+          statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200";
+          statusEl.textContent = `${res.status} ${res.statusText}`;
+        }
+
+        contentEl.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+      } catch(err) {
+        respBox.classList.remove('hidden');
+        statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-[#FDECEB] text-[#E34234] border border-[#FCA5A5]";
+        statusEl.textContent = "CLIENT ERROR";
+        timeEl.textContent = "";
+        contentEl.textContent = "Network / Client Error: " + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-white"></i><span>Send Call</span>`;
+        lucide.createIcons();
+      }
     }
   </script>
 </body>
